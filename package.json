@@ -1,0 +1,40 @@
+{
+  "name": "@upamune/mypi",
+  "version": "0.1.0",
+  "description": "Personal Pi coding agent setup for upamune.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "mypi": "bin/mypi.mjs"
+  },
+  "files": [
+    "bin",
+    "prompts",
+    "skills",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "doctor": "node bin/mypi.mjs doctor",
+    "status": "node bin/mypi.mjs status",
+    "install:local-source": "node bin/mypi.mjs install --self-source ."
+  },
+  "keywords": [
+    "pi",
+    "pi-package",
+    "pi-coding-agent",
+    "coding-agent"
+  ],
+  "pi": {
+    "skills": [
+      "skills"
+    ],
+    "prompts": [
+      "prompts"
+    ]
+  }
+}
