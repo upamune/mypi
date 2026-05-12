@@ -12,37 +12,49 @@
 ローカル checkout から試す場合:
 
 ```bash
-node bin/mypi.mjs install --self-source .
+aube run install:local-source
 ```
 
 GitHub に push した後に使う場合:
 
 ```bash
-npx github:upamune/mypi install
+aubx -p github:upamune/mypi mypi install
 ```
 
 project local に入れる場合:
 
 ```bash
-node bin/mypi.mjs install --local --self-source .
+aube run install:local-source -- --local
 ```
 
 ## Commands
 
+GitHub から直接実行する場合:
+
 ```bash
-node bin/mypi.mjs install              # selected catalog を global に入れる
-node bin/mypi.mjs install --local      # current project の .pi/settings.json に入れる
-node bin/mypi.mjs install --only core  # category / package id で絞る
-node bin/mypi.mjs status               # catalog の installed/missing を見る
-node bin/mypi.mjs update               # catalog reconcile + pi update
-node bin/mypi.mjs remove usage         # catalog id または raw source を削除
-node bin/mypi.mjs doctor               # node/npm/git/pi/auth/settings を確認
+aubx -p github:upamune/mypi mypi install              # selected catalog を global に入れる
+aubx -p github:upamune/mypi mypi install --local      # current project の .pi/settings.json に入れる
+aubx -p github:upamune/mypi mypi install --only core  # category / package id で絞る
+aubx -p github:upamune/mypi mypi status               # catalog の installed/missing を見る
+aubx -p github:upamune/mypi mypi update               # catalog reconcile + pi update
+aubx -p github:upamune/mypi mypi remove usage         # catalog id または raw source を削除
+aubx -p github:upamune/mypi mypi doctor               # node/aube/git/pi/auth/settings を確認
 ```
+
+ローカル checkout では aube scripts 経由で実行します。
+
+```bash
+aube run install
+aube run status
+aube run doctor
+```
+
+`install` / `update` は Pi の `npmCommand` に `bin/aube-npm-command.mjs` を設定します。Pi からは npm 互換コマンドとして呼ばれますが、ラッパー内で `aube install -g` を `aube add -g` に変換するため、実際の package manager は aube になります。Pi package 更新時の trust downgrade 判定は `trustPolicy=no-downgrade` のまま維持し、必要な package だけ `trustPolicyExclude` に入れます。旧 `@mariozechner/*` peer が残る package の deprecation 警告は、global install に限って `NPM_CONFIG_DEPRECATION_WARNINGS=none` を付けて mute します。
 
 実行内容だけ見たいとき:
 
 ```bash
-node bin/mypi.mjs install --dry-run --self-source .
+aube run install:local-source -- --dry-run
 ```
 
 ## Catalog
@@ -85,3 +97,13 @@ pi
 ```
 
 認証がまだなら、Pi の中で `/login` します。API key を使う場合は `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY` などを shell に設定してから起動します。
+
+## Development
+
+この repo 自体の package manager は aube です。`aube-workspace.yaml` は `paranoid: true` と 3 日の minimum release age を有効にしています。
+
+```bash
+aube install
+aube test
+aube pack --dry-run
+```

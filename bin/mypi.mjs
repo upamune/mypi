@@ -160,6 +160,7 @@ export const CATALOG = [
 
 const COMMANDS = new Set(["install", "status", "update", "remove", "doctor", "list"]);
 const SUBAGENT_BUILTIN_MODELS = ["context-builder", "planner", "researcher", "reviewer", "scout", "worker"];
+const AUBE_NPM_COMMAND_BASENAME = "aube-npm-command.mjs";
 const AUTH_ENV_VARS = [
   ["ANTHROPIC_API_KEY", "anthropic"],
   ["OPENAI_API_KEY", "openai"],
@@ -371,6 +372,32 @@ function writeSubagentModelFallbacks(flags) {
   });
 }
 
+export function resolveAubeNpmCommand(scriptPath = argv[1]) {
+  let entrypoint = dirname(resolve("bin", "mypi.mjs"));
+  if (scriptPath) {
+    try {
+      entrypoint = dirname(realpathSync(scriptPath));
+    } catch {
+      entrypoint = dirname(resolve(scriptPath));
+    }
+  }
+  return join(entrypoint, AUBE_NPM_COMMAND_BASENAME);
+}
+
+function writeAubeNpmCommand(flags) {
+  const command = [resolveAubeNpmCommand()];
+  if (flags.dryRun) {
+    console.log(`dry-run: write npmCommand ${JSON.stringify(command)}`);
+    return { ok: true, changed: false };
+  }
+
+  return writeSettings(flags.local, (settings) => {
+    if (JSON.stringify(settings.npmCommand) === JSON.stringify(command)) return false;
+    settings.npmCommand = command;
+    return true;
+  });
+}
+
 function authJsonPath() {
   return join(homedir(), ".pi", "agent", "auth.json");
 }
@@ -402,18 +429,30 @@ async function confirm(message, defaultValue = true) {
 async function ensurePi(flags) {
   if (hasCommand("pi")) return true;
   if (flags.dryRun) {
-    console.log("dry-run: npm install -g @mariozechner/pi-coding-agent");
+    console.log("dry-run: aube add -g @earendil-works/pi-coding-agent");
     return true;
   }
 
-  const ok = flags.yes || await confirm("`pi` is not on PATH. Install it with `npm install -g @mariozechner/pi-coding-agent`?", true);
+  if (!hasCommand("aube")) {
+    console.error(red("`pi` is not on PATH and `aube` is not available to install it."));
+    return false;
+  }
+
+  const ok = flags.yes || await confirm("`pi` is not on PATH. Install it with `aube add -g @earendil-works/pi-coding-agent`?", true);
   if (!ok) {
     console.log("Install Pi first, then re-run `mypi install`.");
     return false;
   }
 
-  console.log("Installing Pi with npm install -g @mariozechner/pi-coding-agent");
-  const status = spawnCommand("npm", ["install", "-g", "@mariozechner/pi-coding-agent"], { stdio: "inherit" }).status ?? 1;
+  console.log("Installing Pi with aube add -g @earendil-works/pi-coding-agent");
+  const status = spawnCommand("aube", ["add", "-g", "@earendil-works/pi-coding-agent"], {
+    stdio: "inherit",
+    env: {
+      ...env,
+      NPM_CONFIG_DEPRECATION_WARNINGS: "none",
+      NPM_CONFIG_TRUST_POLICY: "no-downgrade"
+    }
+  }).status ?? 1;
   return status === 0 && hasCommand("pi");
 }
 
@@ -451,6 +490,13 @@ async function cmdInstall(flags) {
   console.log(`Selected: ${selected.length}/${catalog(flags).length}`);
   console.log(`Already installed: ${selected.length - toInstall.length}`);
   console.log(`Will install: ${toInstall.length}`);
+
+  const npmCommandResult = writeAubeNpmCommand(flags);
+  if (!npmCommandResult.ok) {
+    console.error(red(`Refusing to update ${npmCommandResult.path}: ${npmCommandResult.error}`));
+    return 2;
+  }
+  if (npmCommandResult.changed && npmCommandResult.backup) console.log(`Backed up settings to ${npmCommandResult.backup}`);
 
   if (selected.some((pkg) => pkg.id === "subagents")) {
     const result = writeSubagentModelFallbacks(flags);
@@ -579,8 +625,14 @@ function cmdDoctor(flags) {
   const nodeMajor = Number(process.versions.node.split(".")[0]);
   if (nodeMajor >= 20) pass(`Node ${process.versions.node}`);
   else fail(`Node ${process.versions.node}; mypi requires Node >= 20`);
-  if (hasCommand("npm")) pass("npm is on PATH");
-  else fail("npm is not on PATH");
+  if (hasCommand("aube")) {
+    pass("aube is on PATH");
+    const version = spawnCommand("aube", ["--version"], { encoding: "utf8" });
+    const output = String(version.stdout || version.stderr || "").trim();
+    if (output) pass(`aube --version: ${output}`);
+  } else {
+    fail("aube is not on PATH");
+  }
   if (hasCommand("git")) pass("git is on PATH");
   else warn("git is not on PATH; git package sources will fail");
 

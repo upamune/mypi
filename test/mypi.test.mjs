@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildSpawnOptions, CATALOG, parseArgs, resolveEntrypointUrl } from "../bin/mypi.mjs";
+import { buildSpawnOptions, CATALOG, parseArgs, resolveAubeNpmCommand, resolveEntrypointUrl } from "../bin/mypi.mjs";
 
 test("catalog has unique ids and sources", () => {
   assert.equal(new Set(CATALOG.map((pkg) => pkg.id)).size, CATALOG.length);
@@ -51,4 +51,11 @@ test("buildSpawnOptions enables shell on Windows only", () => {
 
 test("resolveEntrypointUrl tolerates missing paths", () => {
   assert.match(resolveEntrypointUrl("/tmp/does-not-exist/mypi.mjs"), /^file:/);
+});
+
+test("resolveAubeNpmCommand points next to the mypi bin", () => {
+  assert.equal(
+    resolveAubeNpmCommand(new URL("../bin/mypi.mjs", import.meta.url).pathname).endsWith("/bin/aube-npm-command.mjs"),
+    true
+  );
 });
