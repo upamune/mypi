@@ -50,7 +50,34 @@ aube run status
 aube run doctor
 ```
 
-`install` / `update` は Pi の `npmCommand` に `bin/aube-npm-command.mjs` を設定します。Pi からは npm 互換コマンドとして呼ばれますが、ラッパー内で `aube install -g` を `aube add -g` に変換するため、実際の package manager は aube になります。Pi package 更新時の trust downgrade 判定は `trustPolicy=no-downgrade` のまま維持し、必要な package だけ `trustPolicyExclude` に入れます。旧 `@mariozechner/*` peer が残る package の deprecation 警告は、global install に限って `NPM_CONFIG_DEPRECATION_WARNINGS=none` を付けて mute します。
+`install` / `update` は Pi の `npmCommand` に `bin/aube-npm-command.mjs` を設定します。Pi からは npm 互換コマンドとして呼ばれますが、ラッパー内で `aube install -g` を `aube add -g` に変換するため、実際の package manager は aube になります。
+
+### Aube settings for Pi package installs
+
+この machine の通常の aube は `paranoid=true` / `strictDepBuilds=true` のままで使います。Pi package install だけは npm-compatible な global installer として動くため、`bin/aube-npm-command.mjs` が child process にだけ次の調整を入れます。ユーザーの global aube config を恒久的に緩める必要はありません。
+
+- `install -g <pkg>` を `aube add -g <pkg>` に変換する
+- public npm packages 解決用に `NPM_CONFIG_REGISTRY=https://registry.npmjs.org/` を設定する
+  - 通常 shell の registry が private/proxy registry の場合でも Pi catalog を解決できるようにするため
+- `NPM_CONFIG_TRUST_POLICY=no-downgrade` を維持する
+- `NPM_CONFIG_TRUST_POLICY_EXCLUDE=pi-ask-user@0.11.0` を設定する
+  - catalog 内で必要な package だけ trust downgrade 判定から除外する
+- `NPM_CONFIG_DEPRECATION_WARNINGS=none` を設定する
+  - 旧 `@mariozechner/*` peer が残る package の deprecation warning を global install に限って mute する
+- `NPM_CONFIG_PARANOID=false` と `NPM_CONFIG_STRICT_DEP_BUILDS=false` を child process にだけ設定する
+  - `@google/genai`, `koffi`, `protobufjs` などの transitive dependency が build script review で Pi catalog install 全体を止めないようにするため
+  - build scripts は aube により ignore され、必要ならあとで `aube approve-builds` で明示レビューする
+- `--allow-build=@google/genai`, `--allow-build=koffi`, `--allow-build=protobufjs` を付けて、global aube manifest に review 対象を明示する
+- `aube root -g` の結果ディレクトリがまだ存在しない初回 install でも落ちないようにする
+
+確認したいとき:
+
+```bash
+aube config get paranoid          # expected: true
+aube config get strictDepBuilds   # expected: true
+aube run install:local-source
+aube run status
+```
 
 実行内容だけ見たいとき:
 
