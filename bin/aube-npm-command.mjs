@@ -12,11 +12,12 @@ const ALLOWED_DEPRECATED_VERSIONS = {
   "node-domexception": "*"
 };
 const TRUST_POLICY_EXCLUDE = ["pi-ask-user@0.11.0"];
+const ALLOW_BUILDS = ["@google/genai", "koffi", "protobufjs"];
 
 function translateArgs(args) {
   if (args[0] !== "install") return args;
   if (!args.includes("-g") && !args.includes("--global")) return args;
-  return ["add", ...args.slice(1)];
+  return ["add", ...ALLOW_BUILDS.map((pkg) => `--allow-build=${pkg}`), ...args.slice(1)];
 }
 
 function isGlobalAdd(args) {
@@ -24,6 +25,8 @@ function isGlobalAdd(args) {
 }
 
 function findGlobalPackageJson(root) {
+  if (!root || !existsSync(root)) return null;
+
   const direct = join(root, "package.json");
   if (existsSync(direct)) return direct;
 
@@ -69,6 +72,9 @@ const childEnv = {
   ...env,
   ...(isGlobalAdd(args) ? {
     NPM_CONFIG_DEPRECATION_WARNINGS: "none",
+    NPM_CONFIG_PARANOID: "false",
+    NPM_CONFIG_REGISTRY: "https://registry.npmjs.org/",
+    NPM_CONFIG_STRICT_DEP_BUILDS: "false",
     NPM_CONFIG_TRUST_POLICY: "no-downgrade",
     NPM_CONFIG_TRUST_POLICY_EXCLUDE: TRUST_POLICY_EXCLUDE.join(",")
   } : {})
