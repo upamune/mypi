@@ -20,6 +20,7 @@ test("catalog includes native diff review", () => {
 
 test("catalog includes both planning workflows", () => {
   assert.equal(CATALOG.some((pkg) => pkg.id === "plan" && pkg.source === "npm:@devkade/pi-plan@0.2.2"), true);
+  assert.equal(CATALOG.some((pkg) => pkg.id === "review-loop" && pkg.source === "npm:pi-review-loop@0.4.4"), true);
   assert.equal(CATALOG.some((pkg) => pkg.id === "plannotator" && pkg.source === "npm:@plannotator/pi-extension@0.19.14"), true);
 });
 

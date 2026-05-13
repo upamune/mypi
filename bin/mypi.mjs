@@ -55,6 +55,12 @@ export const CATALOG = [
     description: "Read-only planning mode"
   },
   {
+    id: "review-loop",
+    category: "core",
+    source: "npm:pi-review-loop@0.4.4",
+    description: "Automated plan and code review loop"
+  },
+  {
     id: "simplify",
     category: "core",
     source: "npm:pi-simplify@0.2.0",

@@ -98,6 +98,7 @@ default では次を入れます。
 | `core` | `web-access` | [npm:pi-web-access](https://www.npmjs.com/package/pi-web-access) | Web search and URL fetching |
 | `core` | `memory` | [github.com/VandeeFeng/pi-memory-md](https://github.com/VandeeFeng/pi-memory-md) | Markdown-backed persistent memory |
 | `core` | `plan` | [npm:@devkade/pi-plan](https://www.npmjs.com/package/@devkade/pi-plan) | Read-only planning mode |
+| `core` | `review-loop` | [npm:pi-review-loop](https://www.npmjs.com/package/pi-review-loop) | Automated plan and code review loop |
 | `core` | `simplify` | [npm:pi-simplify](https://www.npmjs.com/package/pi-simplify) | Code clarity and consistency review |
 | `core` | `add-dir` | [npm:pi-add-dir](https://www.npmjs.com/package/pi-add-dir) | Load extra project directories |
 | `core` | `prompt-templates` | [npm:pi-prompt-template-model](https://www.npmjs.com/package/pi-prompt-template-model) | Prompt template model and thinking frontmatter |
@@ -115,6 +116,12 @@ default では次を入れます。
 | `research` | `autoresearch` | [github.com/davebcn87/pi-autoresearch](https://github.com/davebcn87/pi-autoresearch) | Autonomous research and experiment loop |
 | `themes` | `terminal-theme` | [npm:pi-terminal-theme](https://www.npmjs.com/package/pi-terminal-theme) | Map Pi colors to terminal ANSI colors |
 | `themes` | `curated-themes` | [npm:@victor-software-house/pi-curated-themes](https://www.npmjs.com/package/@victor-software-house/pi-curated-themes) | Curated terminal themes |
+
+## Plan Review Workflow
+
+`/plan-loop-plannotator` drafts a markdown checklist plan, runs `pi-review-loop` over the plan with fresh context, then submits the final plan to Plannotator for human approval.
+
+For manual control, use `/review-plan` to run the agent loop over a plan, then `/plannotator <plan.md>` or `plannotator_submit_plan` to open the visual review UI.
 
 ## Bundled Extensions
 
