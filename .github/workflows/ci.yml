@@ -61,6 +61,7 @@ jobs:
           tmp_project="$(mktemp -d)"
           aube_bin="$(mise which aube)"
           node_bin="$(mise which node)"
+          pi_bin="$(mise which pi)"
           install_source="git+https://github.com/${MYPI_REPO}.git#${MYPI_REF}"
           printf 'machine github.com\n  login x-access-token\n  password %s\n' "$GITHUB_TOKEN" > ~/.netrc
           chmod 600 ~/.netrc
@@ -69,6 +70,7 @@ jobs:
 
           "$aube_bin" add --no-save "$install_source"
           ./node_modules/.bin/mypi install --local --yes --only mypi --self-source "$MYPI_PI_SOURCE"
+          "$pi_bin" install -l "$MYPI_PI_SOURCE"
 
           settings="$tmp_project/.pi/settings.json"
           test -f "$settings"
