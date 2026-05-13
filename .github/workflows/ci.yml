@@ -68,7 +68,7 @@ jobs:
           printf '{"type":"module"}\n' > package.json
 
           "$aube_bin" add --no-save "$install_source"
-          "$node_bin" ./node_modules/.bin/mypi install --local --yes --only mypi --self-source "$MYPI_PI_SOURCE"
+          ./node_modules/.bin/mypi install --local --yes --only mypi --self-source "$MYPI_PI_SOURCE"
 
           settings="$tmp_project/.pi/settings.json"
           test -f "$settings"
