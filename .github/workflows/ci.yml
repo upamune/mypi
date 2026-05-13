@@ -59,15 +59,17 @@ jobs:
         run: |
           set -euo pipefail
           tmp_project="$(mktemp -d)"
+          aube_bin="$(mise which aube)"
+          node_bin="$(mise which node)"
           cd "$tmp_project"
           printf '{"type":"module"}\n' > package.json
 
-          aube add --no-save "$MYPI_INSTALL_SOURCE"
-          ./node_modules/.bin/mypi install --local --yes --only mypi --self-source "$MYPI_PI_SOURCE"
+          "$aube_bin" add --no-save "$MYPI_INSTALL_SOURCE"
+          "$node_bin" ./node_modules/.bin/mypi install --local --yes --only mypi --self-source "$MYPI_PI_SOURCE"
 
           settings="$tmp_project/.pi/settings.json"
           test -f "$settings"
-          node -e '
+          "$node_bin" -e '
             const fs = require("node:fs");
             const settings = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
             const expected = process.env.MYPI_PI_SOURCE;
