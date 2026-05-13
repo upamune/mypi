@@ -46,6 +46,7 @@
     ]
   },
   "dependencies": {
+    "diff": "^8.0.2",
     "mitsupi": "^1.6.0"
   },
   "peerDependencies": {

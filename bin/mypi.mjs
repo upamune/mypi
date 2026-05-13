@@ -21,25 +21,25 @@ export const CATALOG = [
   {
     id: "subagents",
     category: "core",
-    source: "npm:pi-subagents",
+    source: "npm:pi-subagents@0.24.2",
     description: "Sub-agent execution"
   },
   {
     id: "ask-user",
     category: "core",
-    source: "npm:pi-ask-user",
+    source: "npm:pi-ask-user@0.11.0",
     description: "Interactive ask-user prompts for agent workflows"
   },
   {
     id: "mcp",
     category: "core",
-    source: "npm:pi-mcp-adapter",
+    source: "npm:pi-mcp-adapter@2.6.0",
     description: "MCP server integration"
   },
   {
     id: "web-access",
     category: "core",
-    source: "npm:pi-web-access",
+    source: "npm:pi-web-access@0.10.7",
     description: "Web search and URL fetching"
   },
   {
@@ -51,55 +51,55 @@ export const CATALOG = [
   {
     id: "plan",
     category: "core",
-    source: "npm:@devkade/pi-plan",
+    source: "npm:@devkade/pi-plan@0.2.2",
     description: "Read-only planning mode"
   },
   {
     id: "simplify",
     category: "core",
-    source: "npm:pi-simplify",
+    source: "npm:pi-simplify@0.2.0",
     description: "Code clarity and consistency review"
   },
   {
     id: "add-dir",
     category: "core",
-    source: "npm:pi-add-dir",
+    source: "npm:pi-add-dir@1.3.1",
     description: "Load extra project directories"
   },
   {
     id: "prompt-templates",
     category: "core",
-    source: "npm:pi-prompt-template-model",
+    source: "npm:pi-prompt-template-model@0.9.3",
     description: "Prompt template model and thinking frontmatter"
   },
   {
     id: "claude-cli",
     category: "core",
-    source: "npm:pi-claude-cli",
+    source: "npm:pi-claude-cli@0.3.1",
     description: "Claude Code CLI auth as a Pi provider"
   },
   {
     id: "powerbar-settings",
     category: "ui",
-    source: "npm:@juanibiapina/pi-extension-settings",
+    source: "npm:@juanibiapina/pi-extension-settings@0.6.1",
     description: "Shared settings layer for UI extensions"
   },
   {
     id: "powerbar",
     category: "ui",
-    source: "npm:@juanibiapina/pi-powerbar",
+    source: "npm:@juanibiapina/pi-powerbar@0.9.1",
     description: "Live status bar"
   },
   {
     id: "usage",
     category: "ui",
-    source: "npm:@tmustier/pi-usage-extension",
+    source: "npm:@tmustier/pi-usage-extension@0.3.2",
     description: "Token and cost tracker"
   },
   {
     id: "raw-paste",
     category: "ui",
-    source: "npm:@tmustier/pi-raw-paste",
+    source: "npm:@tmustier/pi-raw-paste@0.1.3",
     description: "Raw clipboard paste command"
   },
   {
@@ -111,19 +111,19 @@ export const CATALOG = [
   {
     id: "btw",
     category: "ui",
-    source: "npm:pi-btw",
+    source: "npm:pi-btw@0.4.0",
     description: "Side questions without polluting history"
   },
   {
     id: "interactive-shell",
     category: "ui",
-    source: "npm:pi-interactive-shell",
+    source: "npm:pi-interactive-shell@0.13.0",
     description: "Observable interactive shell overlays"
   },
   {
     id: "plannotator",
     category: "ui",
-    source: "npm:@plannotator/pi-extension",
+    source: "npm:@plannotator/pi-extension@0.19.14",
     description: "Visual plan review, annotation, and approval workflow"
   },
   {
@@ -135,7 +135,7 @@ export const CATALOG = [
   {
     id: "slopchop",
     category: "ui",
-    source: "npm:pi-slopchop",
+    source: "npm:pi-slopchop@0.0.5",
     description: "Terminal-native diff review"
   },
   {
@@ -147,13 +147,13 @@ export const CATALOG = [
   {
     id: "terminal-theme",
     category: "themes",
-    source: "npm:pi-terminal-theme",
+    source: "npm:pi-terminal-theme@0.1.4",
     description: "Map Pi colors to terminal ANSI colors"
   },
   {
     id: "curated-themes",
     category: "themes",
-    source: "npm:@victor-software-house/pi-curated-themes",
+    source: "npm:@victor-software-house/pi-curated-themes@0.2.1",
     description: "Curated terminal themes"
   }
 ];

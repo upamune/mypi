@@ -19,8 +19,8 @@ test("catalog includes native diff review", () => {
 });
 
 test("catalog includes both planning workflows", () => {
-  assert.equal(CATALOG.some((pkg) => pkg.id === "plan" && pkg.source === "npm:@devkade/pi-plan"), true);
-  assert.equal(CATALOG.some((pkg) => pkg.id === "plannotator" && pkg.source === "npm:@plannotator/pi-extension"), true);
+  assert.equal(CATALOG.some((pkg) => pkg.id === "plan" && pkg.source === "npm:@devkade/pi-plan@0.2.2"), true);
+  assert.equal(CATALOG.some((pkg) => pkg.id === "plannotator" && pkg.source === "npm:@plannotator/pi-extension@0.19.14"), true);
 });
 
 test("catalog includes autoresearch", () => {
@@ -34,6 +34,7 @@ test("package manifest exposes local goal extension and bundled mitsupi extensio
   assert.deepEqual(packageJson.pi.extensions, ["extensions", "node_modules/mitsupi/extensions"]);
   assert.equal(packageJson.files.includes("extensions"), true);
   assert.equal(packageJson.files.includes("intercepted-commands"), false);
+  assert.equal(packageJson.dependencies.diff, "^8.0.2");
   assert.equal(packageJson.dependencies.mitsupi, "^1.6.0");
   assert.equal(packageJson.bundledDependencies.includes("mitsupi"), true);
   assert.equal(packageJson.peerDependencies["@earendil-works/pi-coding-agent"], "*");
