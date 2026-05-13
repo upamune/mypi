@@ -4,7 +4,7 @@
   "description": "Personal Pi coding agent setup for upamune, including bundled mitsupi extensions.",
   "license": "MIT",
   "type": "module",
-  "packageManager": "aube@1.11.0",
+  "packageManager": "bun@1.3.9",
   "bin": {
     "mypi": "bin/mypi.mjs"
   },

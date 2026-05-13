@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
-import { homedir, platform, tmpdir } from "node:os";
+import { homedir, platform } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { argv, cwd, env, exit, stdin, stderr, stdout } from "node:process";
@@ -166,7 +166,7 @@ export const CATALOG = [
 
 const COMMANDS = new Set(["install", "status", "update", "remove", "doctor", "list"]);
 const SUBAGENT_BUILTIN_MODELS = ["context-builder", "planner", "researcher", "reviewer", "scout", "worker"];
-const AUBE_NPM_COMMAND_BASENAME = "aube-npm-command.mjs";
+const PI_NPM_COMMAND = ["bun"];
 const AUTH_ENV_VARS = [
   ["ANTHROPIC_API_KEY", "anthropic"],
   ["OPENAI_API_KEY", "openai"],
@@ -378,36 +378,14 @@ function writeSubagentModelFallbacks(flags) {
   });
 }
 
-export function resolveAubeNpmCommand(scriptPath = argv[1]) {
-  let entrypoint = dirname(resolve("bin", "mypi.mjs"));
-  if (scriptPath) {
-    try {
-      entrypoint = dirname(realpathSync(scriptPath));
-    } catch {
-      entrypoint = dirname(resolve(scriptPath));
-    }
-  }
-  return join(entrypoint, AUBE_NPM_COMMAND_BASENAME);
-}
-
-export function isEphemeralAubeDlxCommand(command, tempDir = tmpdir()) {
-  const normalizedCommand = String(command);
-  const normalizedTemp = String(tempDir).replace(/\/+$/, "");
-  return normalizedCommand.startsWith(`${normalizedTemp}/`) && normalizedCommand.includes("/aube-dlx-");
-}
-
-function writeAubeNpmCommand(flags) {
-  const command = [resolveAubeNpmCommand()];
+function writePiNpmCommand(flags) {
+  const command = PI_NPM_COMMAND;
   if (flags.dryRun) {
     console.log(`dry-run: write npmCommand ${JSON.stringify(command)}`);
     return { ok: true, changed: false };
   }
 
   return writeSettings(flags.local, (settings) => {
-    if (isEphemeralAubeDlxCommand(command[0])) {
-      console.warn(yellow(`Skipping npmCommand update from ephemeral aube dlx path: ${command[0]}`));
-      return false;
-    }
     if (JSON.stringify(settings.npmCommand) === JSON.stringify(command)) return false;
     settings.npmCommand = command;
     return true;
@@ -445,28 +423,27 @@ async function confirm(message, defaultValue = true) {
 async function ensurePi(flags) {
   if (hasCommand("pi")) return true;
   if (flags.dryRun) {
-    console.log("dry-run: aube add -g @earendil-works/pi-coding-agent");
+    console.log("dry-run: bun install -g @earendil-works/pi-coding-agent");
     return true;
   }
 
-  if (!hasCommand("aube")) {
-    console.error(red("`pi` is not on PATH and `aube` is not available to install it."));
+  if (!hasCommand("bun")) {
+    console.error(red("`pi` is not on PATH and `bun` is not available to install it."));
     return false;
   }
 
-  const ok = flags.yes || await confirm("`pi` is not on PATH. Install it with `aube add -g @earendil-works/pi-coding-agent`?", true);
+  const ok = flags.yes || await confirm("`pi` is not on PATH. Install it with `bun install -g @earendil-works/pi-coding-agent`?", true);
   if (!ok) {
     console.log("Install Pi first, then re-run `mypi install`.");
     return false;
   }
 
-  console.log("Installing Pi with aube add -g @earendil-works/pi-coding-agent");
-  const status = spawnCommand("aube", ["add", "-g", "@earendil-works/pi-coding-agent"], {
+  console.log("Installing Pi with bun install -g @earendil-works/pi-coding-agent");
+  const status = spawnCommand("bun", ["install", "-g", "@earendil-works/pi-coding-agent"], {
     stdio: "inherit",
     env: {
       ...env,
-      NPM_CONFIG_DEPRECATION_WARNINGS: "none",
-      NPM_CONFIG_TRUST_POLICY: "no-downgrade"
+      NPM_CONFIG_REGISTRY: "https://registry.npmjs.org/"
     }
   }).status ?? 1;
   return status === 0 && hasCommand("pi");
@@ -507,7 +484,7 @@ async function cmdInstall(flags) {
   console.log(`Already installed: ${selected.length - toInstall.length}`);
   console.log(`Will install: ${toInstall.length}`);
 
-  const npmCommandResult = writeAubeNpmCommand(flags);
+  const npmCommandResult = writePiNpmCommand(flags);
   if (!npmCommandResult.ok) {
     console.error(red(`Refusing to update ${npmCommandResult.path}: ${npmCommandResult.error}`));
     return 2;
@@ -641,13 +618,13 @@ function cmdDoctor(flags) {
   const nodeMajor = Number(process.versions.node.split(".")[0]);
   if (nodeMajor >= 20) pass(`Node ${process.versions.node}`);
   else fail(`Node ${process.versions.node}; mypi requires Node >= 20`);
-  if (hasCommand("aube")) {
-    pass("aube is on PATH");
-    const version = spawnCommand("aube", ["--version"], { encoding: "utf8" });
+  if (hasCommand("bun")) {
+    pass("bun is on PATH");
+    const version = spawnCommand("bun", ["--version"], { encoding: "utf8" });
     const output = String(version.stdout || version.stderr || "").trim();
-    if (output) pass(`aube --version: ${output}`);
+    if (output) pass(`bun --version: ${output}`);
   } else {
-    fail("aube is not on PATH");
+    fail("bun is not on PATH");
   }
   if (hasCommand("git")) pass("git is on PATH");
   else warn("git is not on PATH; git package sources will fail");

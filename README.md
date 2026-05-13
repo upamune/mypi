@@ -13,19 +13,19 @@
 ローカル checkout から試す場合:
 
 ```bash
-aube run install:local-source
+bun run install:local-source
 ```
 
 GitHub に push した後に使う場合:
 
 ```bash
-aubx -p github:upamune/mypi mypi install
+bunx github:upamune/mypi mypi install
 ```
 
 project local に入れる場合:
 
 ```bash
-aube run install:local-source -- --local
+bun run install:local-source -- --local
 ```
 
 ## Commands
@@ -33,56 +33,47 @@ aube run install:local-source -- --local
 GitHub から直接実行する場合:
 
 ```bash
-aubx -p github:upamune/mypi mypi install              # selected catalog を global に入れる
-aubx -p github:upamune/mypi mypi install --local      # current project の .pi/settings.json に入れる
-aubx -p github:upamune/mypi mypi install --only core  # category / package id で絞る
-aubx -p github:upamune/mypi mypi status               # catalog の installed/missing を見る
-aubx -p github:upamune/mypi mypi update               # catalog reconcile + pi update
-aubx -p github:upamune/mypi mypi remove usage         # catalog id または raw source を削除
-aubx -p github:upamune/mypi mypi doctor               # node/aube/git/pi/auth/settings を確認
+bunx github:upamune/mypi mypi install              # selected catalog を global に入れる
+bunx github:upamune/mypi mypi install --local      # current project の .pi/settings.json に入れる
+bunx github:upamune/mypi mypi install --only core  # category / package id で絞る
+bunx github:upamune/mypi mypi status               # catalog の installed/missing を見る
+bunx github:upamune/mypi mypi update               # catalog reconcile + pi update
+bunx github:upamune/mypi mypi remove usage         # catalog id または raw source を削除
+bunx github:upamune/mypi mypi doctor               # node/bun/git/pi/auth/settings を確認
 ```
 
-ローカル checkout では aube scripts 経由で実行します。
+ローカル checkout では Bun scripts 経由で実行します。
 
 ```bash
-aube run setup
-aube run status
-aube run doctor
+bun run setup
+bun run status
+bun run doctor
 ```
 
-`install` / `update` は Pi の `npmCommand` に `bin/aube-npm-command.mjs` を設定します。Pi からは npm 互換コマンドとして呼ばれますが、ラッパー内で `aube install -g` を `aube add -g` に変換するため、実際の package manager は aube になります。
+`install` / `update` は Pi の `npmCommand` に `["bun"]` を設定します。Pi package の npm install は Bun の global store に入り、起動時の extension 解決も Bun 側の global `node_modules` を使います。
 
-### Aube settings for Pi package installs
+### Bun settings for Pi package installs
 
-この machine の通常の aube は `paranoid=true` / `strictDepBuilds=true` のままで使います。Pi package install だけは npm-compatible な global installer として動くため、`bin/aube-npm-command.mjs` が child process にだけ次の調整を入れます。ユーザーの global aube config を恒久的に緩める必要はありません。
+Pi package install には Bun を使います。以前の package-manager 互換ラッパーは使いません。
 
-- `install -g <pkg>` を `aube add -g <pkg>` に変換する
-- public npm packages 解決用に `NPM_CONFIG_REGISTRY=https://registry.npmjs.org/` を設定する
-  - 通常 shell の registry が private/proxy registry の場合でも Pi catalog を解決できるようにするため
-- `NPM_CONFIG_TRUST_POLICY=no-downgrade` を維持する
-- `NPM_CONFIG_TRUST_POLICY_EXCLUDE=pi-ask-user@0.11.0` を設定する
-  - catalog 内で必要な package だけ trust downgrade 判定から除外する
-- `NPM_CONFIG_DEPRECATION_WARNINGS=none` を設定する
-  - 旧 `@mariozechner/*` peer が残る package の deprecation warning を global install に限って mute する
-- `NPM_CONFIG_PARANOID=false` と `NPM_CONFIG_STRICT_DEP_BUILDS=false` を child process にだけ設定する
-  - `@google/genai`, `koffi`, `protobufjs` などの transitive dependency が build script review で Pi catalog install 全体を止めないようにするため
-  - build scripts は aube により ignore され、必要ならあとで `aube approve-builds` で明示レビューする
-- `--allow-build=@google/genai`, `--allow-build=koffi`, `--allow-build=protobufjs` を付けて、global aube manifest に review 対象を明示する
-- `aube root -g` の結果ディレクトリがまだ存在しない初回 install でも落ちないようにする
+- `npmCommand` は `["bun"]`
+- global package は `~/.bun/install/global/node_modules` に入る
+- `bun install -g npm:<package>@<version>` が Pi catalog の npm source を解決する
+- Bun は一部 transitive dependency の postinstall を block することがある
+  - 必要になった場合は `bun pm -g untrusted` で確認して、明示的に trust する
 
 確認したいとき:
 
 ```bash
-aube config get paranoid          # expected: true
-aube config get strictDepBuilds   # expected: true
-aube run install:local-source
-aube run status
+bun --version
+bun run install:local-source
+bun run status
 ```
 
 実行内容だけ見たいとき:
 
 ```bash
-aube run install:local-source -- --dry-run
+bun run install:local-source -- --dry-run
 ```
 
 ## Catalog
@@ -123,6 +114,8 @@ default では次を入れます。
 
 For manual control, use `/review-plan` to run the agent loop over a plan, then `/plannotator <plan.md>` or `plannotator_submit_plan` to open the visual review UI.
 
+日々の開発でどの prompt / skill / package をいつ使うかは [`docs/development_flow.md`](docs/development_flow.md) にまとめています。
+
 ## Bundled Extensions
 
 `mitsuhiko/agent-stuff` は npm package `mitsupi` として依存に入れ、Pi manifest から `node_modules/mitsupi/extensions` を参照します。npm package 版の `mitsupi@1.6.0` には GitHub HEAD にある `goal.ts` が含まれていないため、`goal.ts` だけこの repo の `extensions/goal.ts` に置いて Pi manifest から先に読み込ませます。`uv.ts` が参照する PATH shim は `mitsupi` package 側の `intercepted-commands/` を使います。
@@ -144,10 +137,10 @@ pi
 
 ## Development
 
-この repo 自体の package manager は aube です。`aube-workspace.yaml` は `paranoid: true` と 3 日の minimum release age を有効にしています。
+この repo 自体の package manager も Bun です。
 
 ```bash
-aube install
-aube test
-aube pack --dry-run
+bun install
+bun test
+bun pm pack --dry-run
 ```
