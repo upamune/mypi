@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: aube install
 
+      - name: Make aube available outside the checkout
+        run: mise use -g aube@1.11.0
+
       - name: Run tests
         run: aube run test
 
