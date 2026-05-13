@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
-import { homedir, platform } from "node:os";
+import { homedir, platform, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { argv, cwd, env, exit, stdin, stderr, stdout } from "node:process";
@@ -390,6 +390,12 @@ export function resolveAubeNpmCommand(scriptPath = argv[1]) {
   return join(entrypoint, AUBE_NPM_COMMAND_BASENAME);
 }
 
+export function isEphemeralAubeDlxCommand(command, tempDir = tmpdir()) {
+  const normalizedCommand = String(command);
+  const normalizedTemp = String(tempDir).replace(/\/+$/, "");
+  return normalizedCommand.startsWith(`${normalizedTemp}/`) && normalizedCommand.includes("/aube-dlx-");
+}
+
 function writeAubeNpmCommand(flags) {
   const command = [resolveAubeNpmCommand()];
   if (flags.dryRun) {
@@ -398,6 +404,10 @@ function writeAubeNpmCommand(flags) {
   }
 
   return writeSettings(flags.local, (settings) => {
+    if (isEphemeralAubeDlxCommand(command[0])) {
+      console.warn(yellow(`Skipping npmCommand update from ephemeral aube dlx path: ${command[0]}`));
+      return false;
+    }
     if (JSON.stringify(settings.npmCommand) === JSON.stringify(command)) return false;
     settings.npmCommand = command;
     return true;

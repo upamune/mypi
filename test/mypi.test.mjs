@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 
-import { buildSpawnOptions, CATALOG, parseArgs, resolveAubeNpmCommand, resolveEntrypointUrl } from "../bin/mypi.mjs";
+import { buildSpawnOptions, CATALOG, isEphemeralAubeDlxCommand, parseArgs, resolveAubeNpmCommand, resolveEntrypointUrl } from "../bin/mypi.mjs";
 
 const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 
@@ -96,5 +96,16 @@ test("resolveAubeNpmCommand points next to the mypi bin", () => {
   assert.equal(
     resolveAubeNpmCommand(new URL("../bin/mypi.mjs", import.meta.url).pathname).endsWith("/bin/aube-npm-command.mjs"),
     true
+  );
+});
+
+test("detects ephemeral aube dlx npm command paths", () => {
+  assert.equal(
+    isEphemeralAubeDlxCommand("/tmp/aube-dlx-abc/node_modules/mypi/bin/aube-npm-command.mjs", "/tmp"),
+    true
+  );
+  assert.equal(
+    isEphemeralAubeDlxCommand("/Users/example/ghq/github.com/upamune/mypi/bin/aube-npm-command.mjs", "/tmp"),
+    false
   );
 });
