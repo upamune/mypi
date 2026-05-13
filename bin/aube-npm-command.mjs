@@ -16,7 +16,14 @@ const ALLOW_BUILDS = ["@google/genai", "koffi", "protobufjs"];
 
 function translateArgs(args) {
   if (args[0] !== "install") return args;
-  if (!args.includes("-g") && !args.includes("--global")) return args;
+
+  const hasPackageSpecifier = args.slice(1).some((arg, index, rest) => {
+    if (arg.startsWith("-")) return false;
+    const previous = rest[index - 1];
+    return !["--prefix", "--dir", "--cd", "-C"].includes(previous);
+  });
+
+  if (!args.includes("-g") && !args.includes("--global") && !hasPackageSpecifier) return args;
   return ["add", ...ALLOW_BUILDS.map((pkg) => `--allow-build=${pkg}`), ...args.slice(1)];
 }
 
