@@ -19,6 +19,17 @@ aube run install:local-source
 GitHub に push した後に使う場合:
 
 ```bash
+pi install git:github.com/upamune/mypi
+pi
+/mypi-setup
+```
+
+`/mypi-setup` はこの package に含まれる Pi slash command です。Pi の中から `mypi install --yes` 相当を実行して catalog を reconcile します。
+package の `install` script は使わず、Pi package installs 用の `npmCommand` も `bin/aube-npm-command.mjs` に設定するため、実際の package manager は aube のままです。
+
+one-shot CLI として直接実行したい場合:
+
+```bash
 aubx -p github:upamune/mypi mypi install
 ```
 
@@ -40,6 +51,15 @@ aubx -p github:upamune/mypi mypi status               # catalog の installed/mi
 aubx -p github:upamune/mypi mypi update               # catalog reconcile + pi update
 aubx -p github:upamune/mypi mypi remove usage         # catalog id または raw source を削除
 aubx -p github:upamune/mypi mypi doctor               # node/aube/git/pi/auth/settings を確認
+```
+
+Pi 内で実行する場合:
+
+```text
+/mypi-setup              # selected catalog を global に入れる
+/mypi-setup --local      # current project の .pi/settings.json に入れる
+/mypi-setup --only core  # category / package id で絞る
+/mypi-setup --dry-run    # 実行内容だけ見る
 ```
 
 ローカル checkout では aube scripts 経由で実行します。
@@ -84,6 +104,13 @@ aube run status
 ```bash
 aube run install:local-source -- --dry-run
 ```
+
+## Skills
+
+この package は Pi skill として次を公開します。
+
+- `/skill:personal-repo-workflow`: 自分用 repo workflow preferences
+- `/skill:grill-me`: Matt Pocock-style に、実装前の要件を codebase-first で確認し、1 度に 1 つずつ質問する requirements interview
 
 ## Catalog
 

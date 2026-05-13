@@ -30,8 +30,10 @@ test("catalog includes autoresearch", () => {
   );
 });
 
-test("package manifest exposes local goal extension and bundled mitsupi extensions", () => {
+test("package manifest exposes local skills, local goal extension, and bundled mitsupi extensions", () => {
+  assert.deepEqual(packageJson.pi.skills, ["skills"]);
   assert.deepEqual(packageJson.pi.extensions, ["extensions", "node_modules/mitsupi/extensions"]);
+  assert.equal(packageJson.files.includes("skills"), true);
   assert.equal(packageJson.files.includes("extensions"), true);
   assert.equal(packageJson.files.includes("intercepted-commands"), false);
   assert.equal(packageJson.dependencies.mitsupi, "^1.6.0");
@@ -42,14 +44,31 @@ test("package manifest exposes local goal extension and bundled mitsupi extensio
   assert.equal(packageJson.peerDependencies.typebox, "*");
 });
 
-test("local extensions include goal extension from agent-stuff HEAD", async () => {
+test("local skills include grill-me requirements interview", async () => {
+  const skillDirs = await readdir(new URL("../skills/", import.meta.url));
+  assert.equal(skillDirs.includes("grill-me"), true);
+
+  const grillMeSource = await readFile(new URL("../skills/grill-me/SKILL.md", import.meta.url), "utf8");
+  assert.match(grillMeSource, /^name: grill-me$/m);
+  assert.match(grillMeSource, /Matt Pocock-style/);
+  assert.match(grillMeSource, /codebase-first/);
+  assert.match(grillMeSource, /Ask exactly one question at a time/);
+  assert.match(grillMeSource, /Do not ask questions that can be answered by reading the codebase/);
+});
+
+test("local extensions include goal extension from agent-stuff HEAD and mypi setup command", async () => {
   const extensionFiles = (await readdir(new URL("../extensions/", import.meta.url))).filter((name) => name.endsWith(".ts"));
-  assert.deepEqual(extensionFiles.sort(), ["goal.ts"]);
+  assert.deepEqual(extensionFiles.sort(), ["goal.ts", "setup.ts"]);
 
   const goalSource = await readFile(new URL("../extensions/goal.ts", import.meta.url), "utf8");
   assert.match(goalSource, /registerCommand\("goal"/);
   assert.match(goalSource, /registerTool\(\{\s*name: "create_goal"/s);
   assert.match(goalSource, /registerTool\(\{\s*name: "update_goal"/s);
+
+  const setupSource = await readFile(new URL("../extensions/setup.ts", import.meta.url), "utf8");
+  assert.match(setupSource, /registerCommand\("mypi-setup"/);
+  assert.match(setupSource, /pi\.exec\("node", \[setupEntrypoint\(\), "install", "--yes"/);
+  assert.equal(packageJson.scripts?.install, undefined);
 });
 
 test("mitsupi package provides extension files and uv shims", async () => {
