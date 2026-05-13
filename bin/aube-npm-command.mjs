@@ -31,6 +31,10 @@ function isGlobalAdd(args) {
   return args[0] === "add" && (args.includes("-g") || args.includes("--global"));
 }
 
+function isAdd(args) {
+  return args[0] === "add";
+}
+
 function findGlobalPackageJson(root) {
   if (!root || !existsSync(root)) return null;
 
@@ -77,7 +81,7 @@ if (isGlobalAdd(args)) configureGlobalAube();
 
 const childEnv = {
   ...env,
-  ...(isGlobalAdd(args) ? {
+  ...(isAdd(args) ? {
     NPM_CONFIG_DEPRECATION_WARNINGS: "none",
     NPM_CONFIG_PARANOID: "false",
     NPM_CONFIG_REGISTRY: "https://registry.npmjs.org/",
