@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test and remote setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up mise tools
+        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
+        with:
+          install: true
+          cache: true
+
+      - name: Install dependencies
+        run: aube install
+
+      - name: Run tests
+        run: aube run test
+
+      - name: Install Pi CLI
+        run: mise use -g npm:@earendil-works/pi-coding-agent@0.74.0
+
+      - name: Run doctor
+        run: aube run doctor
+
+      - name: Resolve remote source ref
+        id: source
+        shell: bash
+        env:
+          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          set -euo pipefail
+          ref="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          repo="${PR_HEAD_REPO:-${GITHUB_REPOSITORY}}"
+          echo "ref=${ref}" >> "$GITHUB_OUTPUT"
+          echo "repo=${repo}" >> "$GITHUB_OUTPUT"
+          echo "install_source=git+https://github.com/${repo}.git#${ref}" >> "$GITHUB_OUTPUT"
+          echo "pi_source=git:github.com/${repo}@${ref}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify setup from remote branch source
+        shell: bash
+        env:
+          MYPI_INSTALL_SOURCE: ${{ steps.source.outputs.install_source }}
+          MYPI_PI_SOURCE: ${{ steps.source.outputs.pi_source }}
+        run: |
+          set -euo pipefail
+          tmp_home="$(mktemp -d)"
+          tmp_project="$(mktemp -d)"
+          export HOME="$tmp_home"
+          cd "$tmp_project"
+          printf '{"type":"module"}\n' > package.json
+
+          aube add --no-save "$MYPI_INSTALL_SOURCE"
+          ./node_modules/.bin/mypi install --local --yes --only mypi --self-source "$MYPI_PI_SOURCE"
+
+          settings="$tmp_project/.pi/settings.json"
+          test -f "$settings"
+          node -e '
+            const fs = require("node:fs");
+            const settings = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            const expected = process.env.MYPI_PI_SOURCE;
+            const sources = (settings.packages ?? []).map((entry) =>
+              typeof entry === "string" ? entry : entry?.source
+            ).filter(Boolean);
+            if (!sources.includes(expected)) {
+              console.error(`Expected ${expected} in ${process.argv[1]}`);
+              console.error(JSON.stringify(settings, null, 2));
+              process.exit(1);
+            }
+            if (sources.some((source) => /(^|\/)workspace\//.test(source) || source === "." || source.startsWith("file:") || source.startsWith("../"))) {
+              console.error("Found a local checkout package source:");
+              console.error(JSON.stringify(sources, null, 2));
+              process.exit(1);
+            }
+          ' "$settings"
