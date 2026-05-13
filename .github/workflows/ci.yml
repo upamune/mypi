@@ -61,7 +61,9 @@ jobs:
           tmp_project="$(mktemp -d)"
           aube_bin="$(mise which aube)"
           node_bin="$(mise which node)"
-          install_source="git+https://x-access-token:${GITHUB_TOKEN}@github.com/${MYPI_REPO}.git#${MYPI_REF}"
+          install_source="git+https://github.com/${MYPI_REPO}.git#${MYPI_REF}"
+          printf 'machine github.com\n  login x-access-token\n  password %s\n' "$GITHUB_TOKEN" > ~/.netrc
+          chmod 600 ~/.netrc
           cd "$tmp_project"
           printf '{"type":"module"}\n' > package.json
 
