@@ -58,9 +58,7 @@ jobs:
           MYPI_PI_SOURCE: ${{ steps.source.outputs.pi_source }}
         run: |
           set -euo pipefail
-          tmp_home="$(mktemp -d)"
           tmp_project="$(mktemp -d)"
-          export HOME="$tmp_home"
           cd "$tmp_project"
           printf '{"type":"module"}\n' > package.json
 
