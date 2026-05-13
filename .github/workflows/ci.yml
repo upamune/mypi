@@ -48,25 +48,24 @@ jobs:
           repo="${PR_HEAD_REPO:-${GITHUB_REPOSITORY}}"
           echo "ref=${ref}" >> "$GITHUB_OUTPUT"
           echo "repo=${repo}" >> "$GITHUB_OUTPUT"
-          echo "install_source=git+https://github.com/${repo}.git#${ref}" >> "$GITHUB_OUTPUT"
           echo "pi_source=git:github.com/${repo}@${ref}" >> "$GITHUB_OUTPUT"
 
       - name: Verify setup from remote branch source
         shell: bash
         env:
-          MYPI_INSTALL_SOURCE: ${{ steps.source.outputs.install_source }}
+          MYPI_REPO: ${{ steps.source.outputs.repo }}
+          MYPI_REF: ${{ steps.source.outputs.ref }}
           MYPI_PI_SOURCE: ${{ steps.source.outputs.pi_source }}
         run: |
           set -euo pipefail
           tmp_project="$(mktemp -d)"
           aube_bin="$(mise which aube)"
           node_bin="$(mise which node)"
-          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
-          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:"
+          install_source="git+https://x-access-token:${GITHUB_TOKEN}@github.com/${MYPI_REPO}.git#${MYPI_REF}"
           cd "$tmp_project"
           printf '{"type":"module"}\n' > package.json
 
-          "$aube_bin" add --no-save "$MYPI_INSTALL_SOURCE"
+          "$aube_bin" add --no-save "$install_source"
           "$node_bin" ./node_modules/.bin/mypi install --local --yes --only mypi --self-source "$MYPI_PI_SOURCE"
 
           settings="$tmp_project/.pi/settings.json"
