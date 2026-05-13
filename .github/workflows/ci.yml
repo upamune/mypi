@@ -61,6 +61,8 @@ jobs:
           tmp_project="$(mktemp -d)"
           aube_bin="$(mise which aube)"
           node_bin="$(mise which node)"
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:"
           cd "$tmp_project"
           printf '{"type":"module"}\n' > package.json
 
