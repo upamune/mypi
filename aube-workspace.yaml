@@ -1,2 +1,6 @@
 paranoid: true
 minimumReleaseAge: 4320
+allowBuilds:
+  '@google/genai': false
+  koffi: false
+  protobufjs: false

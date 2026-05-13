@@ -5,7 +5,8 @@
 この repo は 2 つの役割を持ちます。
 
 - `mypi` CLI: Pi 本体と、よく使う Pi packages をまとめてインストールする
-- Pi package: この repo 内の `skills/` と `prompts/` を Pi に読み込ませる
+- Pi package: この repo 内の `skills/`, `prompts/`, `extensions/` と `mitsupi` の extensions を Pi に読み込ませる
+- bundled extensions: [`mitsupi`](https://github.com/mitsuhiko/agent-stuff) package 経由で `agent-stuff` の published extensions を読み込ませつつ、npm package に未収録の `goal.ts` はこの repo から追加で読み込ませる
 
 ## Install
 
@@ -44,7 +45,7 @@ aubx -p github:upamune/mypi mypi doctor               # node/aube/git/pi/auth/se
 ローカル checkout では aube scripts 経由で実行します。
 
 ```bash
-aube run install
+aube run setup
 aube run status
 aube run doctor
 ```
@@ -63,7 +64,7 @@ default では次を入れます。
 
 | Category | ID | Source | Description |
 | --- | --- | --- | --- |
-| `personal` | `mypi` | [github.com/upamune/mypi](https://github.com/upamune/mypi) | Personal Pi prompts and skills from this repo |
+| `personal` | `mypi` | [github.com/upamune/mypi](https://github.com/upamune/mypi) | Personal Pi prompts, skills, local `goal.ts`, and bundled mitsupi extensions |
 | `core` | `subagents` | [npm:pi-subagents](https://www.npmjs.com/package/pi-subagents) | Sub-agent execution |
 | `core` | `ask-user` | [npm:pi-ask-user](https://www.npmjs.com/package/pi-ask-user) | Interactive ask-user prompts for agent workflows |
 | `core` | `mcp` | [npm:pi-mcp-adapter](https://www.npmjs.com/package/pi-mcp-adapter) | MCP server integration |
@@ -87,6 +88,15 @@ default では次を入れます。
 | `research` | `autoresearch` | [github.com/davebcn87/pi-autoresearch](https://github.com/davebcn87/pi-autoresearch) | Autonomous research and experiment loop |
 | `themes` | `terminal-theme` | [npm:pi-terminal-theme](https://www.npmjs.com/package/pi-terminal-theme) | Map Pi colors to terminal ANSI colors |
 | `themes` | `curated-themes` | [npm:@victor-software-house/pi-curated-themes](https://www.npmjs.com/package/@victor-software-house/pi-curated-themes) | Curated terminal themes |
+
+## Bundled Extensions
+
+`mitsuhiko/agent-stuff` は npm package `mitsupi` として依存に入れ、Pi manifest から `node_modules/mitsupi/extensions` を参照します。npm package 版の `mitsupi@1.6.0` には GitHub HEAD にある `goal.ts` が含まれていないため、`goal.ts` だけこの repo の `extensions/goal.ts` に置いて Pi manifest から先に読み込ませます。`uv.ts` が参照する PATH shim は `mitsupi` package 側の `intercepted-commands/` を使います。
+
+| Source | Path | Contents |
+| --- | --- | --- |
+| local | `extensions/goal.ts` | GitHub HEAD の `goal.ts`。`/goal`, `get_goal`, `create_goal`, `update_goal` を追加 |
+| `mitsupi@1.6.0` | `node_modules/mitsupi/extensions` | published package に含まれる `context.ts`, `uv.ts`, `multi-edit.ts` など |
 
 ## After Install
 

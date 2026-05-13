@@ -1,7 +1,7 @@
 {
   "name": "@upamune/mypi",
   "version": "0.1.0",
-  "description": "Personal Pi coding agent setup for upamune.",
+  "description": "Personal Pi coding agent setup for upamune, including bundled mitsupi extensions.",
   "license": "MIT",
   "type": "module",
   "packageManager": "aube@1.11.0",
@@ -10,6 +10,7 @@
   },
   "files": [
     "bin",
+    "extensions",
     "prompts",
     "skills",
     "README.md",
@@ -21,10 +22,10 @@
   "scripts": {
     "test": "node --test",
     "doctor": "node bin/mypi.mjs doctor",
-    "install": "node bin/mypi.mjs install",
     "list": "node bin/mypi.mjs list",
     "status": "node bin/mypi.mjs status",
-    "install:local-source": "node bin/mypi.mjs install --self-source ."
+    "install:local-source": "node bin/mypi.mjs install --self-source .",
+    "setup": "node bin/mypi.mjs install"
   },
   "keywords": [
     "pi",
@@ -38,6 +39,22 @@
     ],
     "prompts": [
       "prompts"
+    ],
+    "extensions": [
+      "extensions",
+      "node_modules/mitsupi/extensions"
     ]
-  }
+  },
+  "dependencies": {
+    "mitsupi": "^1.6.0"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "bundledDependencies": [
+    "mitsupi"
+  ]
 }

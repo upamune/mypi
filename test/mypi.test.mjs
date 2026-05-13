@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readdir, readFile } from "node:fs/promises";
 
 import { buildSpawnOptions, CATALOG, parseArgs, resolveAubeNpmCommand, resolveEntrypointUrl } from "../bin/mypi.mjs";
+
+const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 
 test("catalog has unique ids and sources", () => {
   assert.equal(new Set(CATALOG.map((pkg) => pkg.id)).size, CATALOG.length);
@@ -25,6 +28,40 @@ test("catalog includes autoresearch", () => {
     CATALOG.some((pkg) => pkg.id === "autoresearch" && pkg.source === "git:github.com/davebcn87/pi-autoresearch"),
     true
   );
+});
+
+test("package manifest exposes local goal extension and bundled mitsupi extensions", () => {
+  assert.deepEqual(packageJson.pi.extensions, ["extensions", "node_modules/mitsupi/extensions"]);
+  assert.equal(packageJson.files.includes("extensions"), true);
+  assert.equal(packageJson.files.includes("intercepted-commands"), false);
+  assert.equal(packageJson.dependencies.mitsupi, "^1.6.0");
+  assert.equal(packageJson.bundledDependencies.includes("mitsupi"), true);
+  assert.equal(packageJson.peerDependencies["@earendil-works/pi-coding-agent"], "*");
+  assert.equal(packageJson.peerDependencies["@earendil-works/pi-ai"], "*");
+  assert.equal(packageJson.peerDependencies["@earendil-works/pi-tui"], "*");
+  assert.equal(packageJson.peerDependencies.typebox, "*");
+});
+
+test("local extensions include goal extension from agent-stuff HEAD", async () => {
+  const extensionFiles = (await readdir(new URL("../extensions/", import.meta.url))).filter((name) => name.endsWith(".ts"));
+  assert.deepEqual(extensionFiles.sort(), ["goal.ts"]);
+
+  const goalSource = await readFile(new URL("../extensions/goal.ts", import.meta.url), "utf8");
+  assert.match(goalSource, /registerCommand\("goal"/);
+  assert.match(goalSource, /registerTool\(\{\s*name: "create_goal"/s);
+  assert.match(goalSource, /registerTool\(\{\s*name: "update_goal"/s);
+});
+
+test("mitsupi package provides extension files and uv shims", async () => {
+  const extensionFiles = (await readdir(new URL("../node_modules/mitsupi/extensions/", import.meta.url))).filter((name) => name.endsWith(".ts"));
+  assert.equal(extensionFiles.includes("context.ts"), true);
+  assert.equal(extensionFiles.includes("goal.ts"), false);
+  assert.equal(extensionFiles.includes("uv.ts"), true);
+  assert.equal(extensionFiles.includes("multi-edit.ts"), true);
+  assert.equal(extensionFiles.length, 16);
+
+  const shimFiles = await readdir(new URL("../node_modules/mitsupi/intercepted-commands/", import.meta.url));
+  assert.deepEqual(shimFiles.sort(), ["pip", "pip3", "poetry", "python", "python3"]);
 });
 
 test("parseArgs supports selectors and local dry-run", () => {
