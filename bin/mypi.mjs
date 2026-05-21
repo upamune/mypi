@@ -133,10 +133,10 @@ export const CATALOG = [
     description: "Native diff review window with Monaco"
   },
   {
-    id: "slopchop",
+    id: "pi-slopkick",
     category: "ui",
-    source: "npm:pi-slopchop",
-    description: "Terminal-native diff review"
+    source: "npm:pi-slopkick",
+    description: "Terminal-native diff review, annotation, and prompt handoff"
   },
   {
     id: "autoresearch",
