@@ -24,6 +24,13 @@ test("catalog includes both planning workflows", () => {
   assert.equal(CATALOG.some((pkg) => pkg.id === "plannotator" && pkg.source === "npm:@plannotator/pi-extension@0.19.14"), true);
 });
 
+test("catalog includes dynamic workflows", () => {
+  assert.equal(
+    CATALOG.some((pkg) => pkg.id === "dynamic-workflows" && pkg.source === "npm:pi-dynamic-workflows@1.0.1"),
+    true
+  );
+});
+
 test("catalog includes autoresearch", () => {
   assert.equal(
     CATALOG.some((pkg) => pkg.id === "autoresearch" && pkg.source === "git:github.com/davebcn87/pi-autoresearch"),
