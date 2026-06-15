@@ -85,6 +85,12 @@ export const CATALOG = [
     description: "Claude Code CLI auth as a Pi provider"
   },
   {
+    id: "dynamic-workflows",
+    category: "core",
+    source: "npm:pi-dynamic-workflows@1.0.1",
+    description: "Claude-Code-style dynamic workflow orchestration"
+  },
+  {
     id: "powerbar-settings",
     category: "ui",
     source: "npm:@juanibiapina/pi-extension-settings@0.6.1",
