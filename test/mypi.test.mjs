@@ -87,6 +87,16 @@ test("parseArgs supports selectors and local dry-run", () => {
   assert.equal(parseArgs(["install", "--local", "--dry-run"]).dryRun, true);
 });
 
+test("parseArgs reports invalid usage as problems", () => {
+  assert.deepEqual(parseArgs(["install"]).problems, []);
+  assert.deepEqual(parseArgs(["install", "--bogus"]).problems, ["Unknown argument: --bogus"]);
+  assert.deepEqual(parseArgs(["install", "--only"]).problems, ["--only requires a value"]);
+  assert.deepEqual(parseArgs(["install", "--self-source"]).problems, ["--self-source requires a value"]);
+  assert.deepEqual(parseArgs(["install", "--only", "core", "--except", "ui"]).problems, [
+    "--only and --except cannot be combined"
+  ]);
+});
+
 test("parseArgs resolves remove targets", () => {
   const flags = parseArgs(["remove", "usage", "npm:example"]);
   assert.equal(flags.command, "remove");

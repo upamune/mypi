@@ -238,7 +238,8 @@ export function parseArgs(args) {
     only: null,
     except: null,
     selfSource: DEFAULT_SELF_SOURCE,
-    targets: []
+    targets: [],
+    problems: []
   };
 
   let index = 0;
@@ -247,24 +248,32 @@ export function parseArgs(args) {
     index = 1;
   }
 
+  const takeValue = (name) => {
+    const value = args[++index];
+    if (value === undefined) {
+      flags.problems.push(`${name} requires a value`);
+      return null;
+    }
+    return value;
+  };
+
   for (; index < args.length; index++) {
     const arg = args[index];
     if (arg === "-l" || arg === "--local") flags.local = true;
     else if (arg === "-y" || arg === "--yes") flags.yes = true;
     else if (arg === "-n" || arg === "--dry-run") flags.dryRun = true;
     else if (arg === "-h" || arg === "--help") flags.help = true;
-    else if (arg === "--only") flags.only = parseList(args[++index]);
+    else if (arg === "--only") flags.only = parseList(takeValue("--only"));
     else if (arg.startsWith("--only=")) flags.only = parseList(arg.slice("--only=".length));
-    else if (arg === "--except") flags.except = parseList(args[++index]);
+    else if (arg === "--except") flags.except = parseList(takeValue("--except"));
     else if (arg.startsWith("--except=")) flags.except = parseList(arg.slice("--except=".length));
-    else if (arg === "--self-source") flags.selfSource = args[++index];
+    else if (arg === "--self-source") flags.selfSource = takeValue("--self-source") ?? flags.selfSource;
     else if (arg.startsWith("--self-source=")) flags.selfSource = arg.slice("--self-source=".length);
     else if (flags.command === "remove" && !arg.startsWith("-")) flags.targets.push(arg);
-    else {
-      console.error(red(`Unknown argument: ${arg}`));
-      flags.help = true;
-    }
+    else flags.problems.push(`Unknown argument: ${arg}`);
   }
+
+  if (flags.only && flags.except) flags.problems.push("--only and --except cannot be combined");
 
   return flags;
 }
@@ -775,6 +784,11 @@ export function resolveEntrypointUrl(scriptPath) {
 
 async function main() {
   const flags = parseArgs(argv.slice(2));
+  if (flags.problems.length > 0) {
+    for (const problem of flags.problems) console.error(red(problem));
+    printHelp();
+    return 2;
+  }
   if (flags.help) {
     printHelp();
     return 0;
