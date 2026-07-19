@@ -215,6 +215,7 @@ Approve 後に実装
 | `mitsupi` `loop` (`/loop`, `signal_loop_success`) | tests pass など明確な成功条件まで follow-up loop したいとき | 成功条件が曖昧だと無駄に回る |
 | `mitsupi` `todos` (`/todos`, `todo`) | session をまたぐ markdown todo、claim/release 付き作業キューを使いたいとき | `pi-manage-todo-list` の `/todos` と衝突しうる |
 | `pi-manage-todo-list` (`manage_todo_list`, `/todos`) | agent に複数ステップの作業を可視化、更新させたいとき | 小さい単発作業には重い。todo list は全置換 |
+| `@ogulcancelik/pi-herdr` (`herdr` tool) | Herdr の pane / tab / workspace を pi から操作したいとき(pane 分割、`run` / `read` / `watch`、`wait_agent`) | Herdr 管理の pane 内(`HERDR_ENV=1`)でのみ有効。herdr 本体は `mise use -g herdr` |
 | `mitsupi` `control` (`/control-sessions`, `send_to_session`) | 複数 Pi session を外から制御、連携したいとき | advanced workflow。送信先 session を必ず確認する |
 | `mitsupi` `split-fork` (`/split-fork`) | 現在 session を fork して別 Ghostty split で並行検討したいとき | 並行編集の conflict に注意 |
 | `mitsupi` `session-breakdown` (`/session-breakdown`) | 直近 7/30/90 日の session usage、tokens、cost を見たいとき | usage / cost は概算になりうる |

@@ -145,6 +145,12 @@ export const CATALOG = [
     description: "Visual plan review, annotation, and approval workflow"
   },
   {
+    id: "herdr",
+    category: "ui",
+    source: "npm:@ogulcancelik/pi-herdr@0.3.0",
+    description: "Herdr-native orchestration tool and skill (inactive outside Herdr panes)"
+  },
+  {
     id: "diff-review",
     category: "ui",
     source: "git:github.com/badlogic/pi-diff-review@57622138f5b02896a230b4fbfe702d24c6a515bb",
