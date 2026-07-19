@@ -25,6 +25,7 @@
     "list": "node bin/mypi.mjs list",
     "status": "node bin/mypi.mjs status",
     "install:local-source": "node bin/mypi.mjs install --self-source .",
+    "sync:goal": "node scripts/sync-goal.mjs",
     "setup": "node bin/mypi.mjs install"
   },
   "keywords": [
