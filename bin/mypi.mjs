@@ -5,7 +5,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { argv, cwd, env, exit, stdin, stderr, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const DEFAULT_SELF_SOURCE = "git:github.com/upamune/mypi";
 
@@ -732,6 +732,21 @@ function cmdDoctor(flags) {
     const version = spawnCommand("bun", ["--version"], { encoding: "utf8" });
     const output = String(version.stdout || version.stderr || "").trim();
     if (output) pass(`bun --version: ${output}`);
+
+    const binProbe = spawnCommand("bun", ["pm", "bin", "-g"], { encoding: "utf8" });
+    const bunGlobalBin = binProbe.status === 0 && String(binProbe.stdout).trim()
+      ? String(binProbe.stdout).trim()
+      : join(homedir(), ".bun", "bin");
+    const pathEntries = String(env.PATH ?? "").split(platform() === "win32" ? ";" : ":");
+    if (pathEntries.includes(bunGlobalBin)) pass(`bun global bin is on PATH (${bunGlobalBin})`);
+    else warn(`bun global bin ${bunGlobalBin} is not on PATH; binaries installed with bun install -g will not be found`);
+
+    const untrusted = spawnCommand("bun", ["pm", "-g", "untrusted"], { encoding: "utf8" });
+    if (untrusted.status === 0) {
+      const untrustedOutput = String(untrusted.stdout).trim();
+      if (!untrustedOutput || /no untrusted/i.test(untrustedOutput)) pass("no blocked postinstall scripts in bun global store");
+      else warn(`bun pm -g untrusted reports blocked postinstall scripts; review and trust them explicitly:\n     ${untrustedOutput.split("\n")[0]}`);
+    }
   } else {
     fail("bun is not on PATH");
   }
@@ -752,7 +767,19 @@ function cmdDoctor(flags) {
   const installed = readInstalledSources(flags.local);
   if (!installed.exists) warn(`${installed.path} does not exist yet`);
   else if (installed.error) fail(`${installed.path} is invalid JSON: ${installed.error}`);
-  else pass(`${installed.path} is readable`);
+  else {
+    pass(`${installed.path} is readable`);
+    const settings = readJson(installed.path).parsed ?? {};
+    if (JSON.stringify(settings.npmCommand) === JSON.stringify(PI_NPM_COMMAND)) pass(`npmCommand is ${JSON.stringify(PI_NPM_COMMAND)}`);
+    else warn(`npmCommand is ${JSON.stringify(settings.npmCommand)}; run mypi install to set ${JSON.stringify(PI_NPM_COMMAND)}`);
+  }
+
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+  if (existsSync(join(repoRoot, "extensions", "goal.ts"))) {
+    console.log(bold("\nLocal checkout"));
+    if (existsSync(join(repoRoot, "node_modules", "mitsupi", "extensions"))) pass("node_modules/mitsupi/extensions is present");
+    else warn("node_modules/mitsupi/extensions is missing; run bun install so the bundled mitsupi extensions can load");
+  }
 
   console.log(bold("\nAuth"));
   const auth = detectAuth();
