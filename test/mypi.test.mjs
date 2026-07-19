@@ -36,6 +36,13 @@ test("git sources pin a commit hash", () => {
   }
 });
 
+test("README catalog table covers every catalog id", async () => {
+  const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
+  for (const pkg of CATALOG) {
+    assert.equal(readme.includes(`\`${pkg.id}\``), true, `README does not mention catalog id ${pkg.id}`);
+  }
+});
+
 test("catalog includes the expected workflow packages", () => {
   const ids = new Set(CATALOG.map((pkg) => pkg.id));
   for (const id of ["diff-review", "plan", "review-loop", "plannotator", "dynamic-workflows", "autoresearch"]) {

@@ -40,7 +40,10 @@ bunx github:upamune/mypi mypi status               # catalog の installed/missi
 bunx github:upamune/mypi mypi update               # catalog reconcile + pi update
 bunx github:upamune/mypi mypi remove usage         # catalog id または raw source を削除
 bunx github:upamune/mypi mypi doctor               # node/bun/git/pi/auth/settings を確認
+bunx github:upamune/mypi mypi outdated             # catalog の pin と最新版を比較
 ```
+
+`remove` は package の登録を外すだけで、`install` が書き込んだ `npmCommand` や `subagents.agentOverrides` は戻しません。
 
 ローカル checkout では Bun scripts 経由で実行します。
 
@@ -119,12 +122,14 @@ For manual control, use `/review-plan` to run the agent loop over a plan, then `
 
 ## Bundled Extensions
 
-`mitsuhiko/agent-stuff` は npm package `mitsupi` として依存に入れ、Pi manifest から `node_modules/mitsupi/extensions` を参照します。npm package 版の `mitsupi@1.6.0` には GitHub HEAD にある `goal.ts` が含まれていないため、`goal.ts` だけこの repo の `extensions/goal.ts` に置いて Pi manifest から先に読み込ませます。`uv.ts` が参照する PATH shim は `mitsupi` package 側の `intercepted-commands/` を使います。
+`mitsuhiko/agent-stuff` は npm package `mitsupi` として依存に入れ、Pi manifest から `node_modules/mitsupi/extensions` を参照します。published `mitsupi` package には GitHub HEAD にある `goal.ts` が含まれていないため、`goal.ts` だけこの repo の `extensions/goal.ts` に vendoring して Pi manifest から先に読み込ませます。`uv.ts` が参照する PATH shim は `mitsupi` package 側の `intercepted-commands/` を使います。
+
+`extensions/goal.ts` は `bun run sync:goal` で upstream の HEAD(または指定 commit)に再同期できます。同期元 commit はファイル先頭の header comment に記録されます。mitsupi 側に `goal.ts` が収録されたらテストが失敗して知らせるので、そのタイミングで vendored copy を撤去します。
 
 | Source | Path | Contents |
 | --- | --- | --- |
-| local | `extensions/goal.ts` | GitHub HEAD の `goal.ts`。`/goal`, `get_goal`, `create_goal`, `update_goal` を追加 |
-| `mitsupi@1.6.0` | `node_modules/mitsupi/extensions` | published package に含まれる `context.ts`, `uv.ts`, `multi-edit.ts` など |
+| local | `extensions/goal.ts` | upstream `agent-stuff` の `goal.ts`。`/goal`, `get_goal`, `create_goal`, `update_goal` を追加 |
+| `mitsupi` | `node_modules/mitsupi/extensions` | published package に含まれる `context.ts`, `uv.ts`, `multi-edit.ts` など |
 
 ## After Install
 
@@ -142,6 +147,8 @@ pi
 
 ```bash
 bun install
-bun test
+bun run test
 bun pm pack --dry-run
 ```
+
+`bun test` は Bun 自前の test runner で実行されるため、`node --test` を使う `bun run test` と挙動が異なります。CI と同じ結果を見るには `bun run test` を使ってください。
