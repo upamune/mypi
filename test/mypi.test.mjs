@@ -4,7 +4,7 @@ import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { buildSpawnOptions, CATALOG, CATEGORIES, parseArgs, pruneBackups, resolveEntrypointUrl } from "../bin/mypi.mjs";
+import { buildSpawnOptions, CATALOG, CATEGORIES, normalizeSource, parseArgs, pruneBackups, resolveEntrypointUrl } from "../bin/mypi.mjs";
 
 const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 
@@ -101,6 +101,16 @@ test("buildSpawnOptions enables shell on Windows only", () => {
   assert.deepEqual(buildSpawnOptions({ stdio: "inherit" }, "linux"), {
     stdio: "inherit"
   });
+});
+
+test("normalizeSource strips version pins and unifies git forms", () => {
+  assert.equal(normalizeSource("npm:pi-subagents@0.35.1"), "npm:pi-subagents");
+  assert.equal(normalizeSource("npm:@scope/name@1.2.3"), "npm:@scope/name");
+  assert.equal(normalizeSource("npm:@scope/name"), "npm:@scope/name");
+  assert.equal(normalizeSource("git:github.com/owner/repo@0123456789012345678901234567890123456789"), "git:github.com/owner/repo");
+  assert.equal(normalizeSource("git:https://github.com/owner/repo"), "git:github.com/owner/repo");
+  assert.equal(normalizeSource("git:github.com/owner/repo.git"), "git:github.com/owner/repo");
+  assert.equal(normalizeSource("."), ".");
 });
 
 test("pruneBackups keeps only the newest backups", async () => {

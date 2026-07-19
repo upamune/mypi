@@ -313,6 +313,33 @@ function hasCommand(name) {
   return probe.status === 0;
 }
 
+export function normalizeSource(source) {
+  if (typeof source !== "string") return source;
+  if (source.startsWith("npm:")) {
+    const spec = source.slice(4);
+    const at = spec.lastIndexOf("@");
+    return at > 0 ? `npm:${spec.slice(0, at)}` : source;
+  }
+  if (source.startsWith("git:")) {
+    let spec = source.slice(4).replace(/^https?:\/\//, "");
+    const at = spec.lastIndexOf("@");
+    if (at > 0) spec = spec.slice(0, at);
+    if (spec.endsWith(".git")) spec = spec.slice(0, -4);
+    return `git:${spec}`;
+  }
+  return source;
+}
+
+function groupByNormalizedSource(sources) {
+  const groups = new Map();
+  for (const source of sources) {
+    const key = normalizeSource(source);
+    if (!groups.has(key)) groups.set(key, new Set());
+    groups.get(key).add(source);
+  }
+  return groups;
+}
+
 function settingsPath(local) {
   return local ? join(cwd(), ".pi", "settings.json") : join(homedir(), ".pi", "agent", "settings.json");
 }
@@ -498,12 +525,25 @@ async function cmdInstall(flags) {
     return 2;
   }
 
-  const toInstall = selected.filter((pkg) => !installed.sources.has(pkg.source));
+  const installedGroups = groupByNormalizedSource(installed.sources);
+  const toInstall = [];
+  const toUpgrade = [];
+  for (const pkg of selected) {
+    if (installed.sources.has(pkg.source)) continue;
+    const staleSources = [...(installedGroups.get(normalizeSource(pkg.source)) ?? [])].filter((source) => source !== pkg.source);
+    if (staleSources.length > 0) toUpgrade.push({ pkg, staleSources });
+    else toInstall.push(pkg);
+  }
+
   const scope = flags.local ? "project .pi/settings.json" : "~/.pi/agent/settings.json";
   console.log(`Target: ${scope}`);
   console.log(`Selected: ${selected.length}/${catalog(flags).length}`);
-  console.log(`Already installed: ${selected.length - toInstall.length}`);
+  console.log(`Already installed: ${selected.length - toInstall.length - toUpgrade.length}`);
   console.log(`Will install: ${toInstall.length}`);
+  console.log(`Will upgrade pin: ${toUpgrade.length}`);
+  for (const { pkg, staleSources } of toUpgrade) {
+    console.log(`  ${pkg.id}: ${staleSources.join(", ")} ${dim("->")} ${pkg.source}`);
+  }
 
   const npmCommandResult = writePiNpmCommand(flags);
   if (!npmCommandResult.ok) {
@@ -525,6 +565,26 @@ async function cmdInstall(flags) {
   for (const pkg of toInstall) {
     const status = runPiInstall(pkg, flags);
     if (status !== 0) failed.push(pkg);
+  }
+
+  for (const { pkg, staleSources } of toUpgrade) {
+    const status = runPiInstall(pkg, flags);
+    if (status !== 0) {
+      failed.push(pkg);
+      continue;
+    }
+    if (flags.dryRun) {
+      for (const source of staleSources) console.log(`dry-run: pi remove ${flags.local ? "-l " : ""}${source}`);
+      continue;
+    }
+    // pi が旧 pin の entry を残した場合だけ掃除する
+    const after = readInstalledSources(flags.local);
+    for (const source of staleSources) {
+      if (!after.sources.has(source)) continue;
+      const args = flags.local ? ["remove", "-l", source] : ["remove", source];
+      console.log(`> pi ${args.join(" ")}`);
+      spawnCommand("pi", args, { stdio: "inherit" });
+    }
   }
 
   if (failed.length > 0) {
@@ -549,14 +609,33 @@ function cmdStatus(flags) {
   }
 
   const pkgs = catalog(flags);
+  const installedGroups = groupByNormalizedSource(installed.sources);
   const present = pkgs.filter((pkg) => installed.sources.has(pkg.source));
-  const missing = pkgs.filter((pkg) => !installed.sources.has(pkg.source));
-  const catalogSources = new Set(pkgs.map((pkg) => pkg.source));
-  const other = [...installed.sources].filter((source) => !catalogSources.has(source));
+  const outdated = pkgs
+    .filter((pkg) => !installed.sources.has(pkg.source))
+    .map((pkg) => ({
+      pkg,
+      staleSources: [...(installedGroups.get(normalizeSource(pkg.source)) ?? [])].filter((source) => source !== pkg.source)
+    }))
+    .filter((entry) => entry.staleSources.length > 0);
+  const missing = pkgs.filter(
+    (pkg) => !installed.sources.has(pkg.source) && !outdated.some((entry) => entry.pkg.id === pkg.id)
+  );
+  const accountedSources = new Set([
+    ...pkgs.map((pkg) => pkg.source),
+    ...outdated.flatMap((entry) => entry.staleSources)
+  ]);
+  const other = [...installed.sources].filter((source) => !accountedSources.has(source));
 
   console.log(`\nInstalled from mypi catalog (${present.length}/${pkgs.length}):`);
   for (const pkg of present) console.log(`  ${green("ok")} [${pkg.category}] ${pkg.id.padEnd(18)} ${dim(pkg.source)}`);
   if (present.length === 0) console.log(`  ${dim("none")}`);
+
+  console.log(`\nOutdated pin (${outdated.length}):`);
+  for (const { pkg, staleSources } of outdated) {
+    console.log(`  ${yellow("!!")} [${pkg.category}] ${pkg.id.padEnd(18)} ${dim(`${staleSources.join(", ")} -> ${pkg.source}`)}`);
+  }
+  if (outdated.length === 0) console.log(`  ${dim("none")}`);
 
   console.log(`\nMissing from mypi catalog (${missing.length}):`);
   for (const pkg of missing) console.log(`  ${dim("--")} [${pkg.category}] ${pkg.id.padEnd(18)} ${dim(pkg.source)}`);
