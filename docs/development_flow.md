@@ -22,6 +22,7 @@
 | 既に計画がある | `/review-plan` | 計画だけを agent loop で見直す |
 | 実装後に自己レビューだけ追加したい | `/review-start` | 問題がなくなるまで agent にレビューを回させる |
 | diff をレビューしてほしい | `/review [観点]` | コードレビュー形式で指摘を出す |
+| 監査・多視点レビュー・大規模調査を並列で回したい | 「workflow でやって」と依頼 | `pi-dynamic-workflows` が script で subagent を fan-out して結果を統合する |
 | 実装中に差分を小さく確認したい | `pi-slopchop` | ターミナルで現在の diff を素早く見る |
 | ブラウザ UI で diff を見たい | `/plannotator-review` | 行コメント付きで視覚的に確認する |
 
@@ -166,6 +167,7 @@ Approve 後に実装
 | Package / command | 使うタイミング | 注意 |
 | --- | --- | --- |
 | `pi-subagents` (`/run`, `/parallel`, `/chain`) | 独立した調査、並列レビュー、別 agent への委譲をしたいとき | 同じファイルを複数 agent が触る作業には向かない |
+| `pi-dynamic-workflows` (`workflow` tool) | 監査、多視点レビュー、fan-out 調査など、多数の subagent を script で決定的に制御したいとき | 「workflow でやって」と明示的に頼む。pi >= 0.78 が必要。prototype のため resumable run はなく、中断は `Esc` |
 | `pi-add-dir` (`/add-dir`, `/suggest-dirs`, `/dirs`) | 別 checkout、sibling repo、関連 project の `AGENTS.md` / `CLAUDE.md` / skills を読ませたいとき | external skills を読ませた後は reload が必要になることがある |
 | `pi-interactive-shell` (`/spawn`, `/attach`, `/dismiss`) | dev server、ssh、psql、vim、別 CLI agent など対話的なプロセスを TUI overlay で扱いたいとき | `interactive_shell(...)` は agent tool call で、人間が直接打つ command ではない |
 | `pi-claude-cli` | Claude Code CLI のサブスク認証を Pi provider として使いたいとき | `claude` CLI が PATH にあり認証済みである必要がある |
@@ -221,6 +223,8 @@ Approve 後に実装
 ### sub-agent に任せる判断
 
 `pi-subagents` は「別 agent に渡しても安全な、境界が切れている作業」に使います。
+
+`pi-dynamic-workflows` との使い分け: 少数のサブタスクを会話の流れで委譲するなら `pi-subagents`、「finder N 体 → 検証 → 統合」のように多数の agent を JavaScript の loop / parallel / pipeline で決定的に回したい(JSON Schema で構造化結果を集めたい)なら workflow を使います。Claude Code の dynamic workflows の Pi 移植版で、model が workflow script を書いて `workflow` tool で実行します。
 
 任せてよい例:
 
