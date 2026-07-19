@@ -170,7 +170,7 @@ export const CATALOG = [
   }
 ];
 
-const COMMANDS = new Set(["install", "status", "update", "remove", "doctor", "list"]);
+const COMMANDS = new Set(["install", "status", "update", "remove", "doctor", "list", "outdated"]);
 const SUBAGENT_BUILTIN_MODELS = ["context-builder", "planner", "researcher", "reviewer", "scout", "worker"];
 const PI_NPM_COMMAND = ["bun"];
 const AUTH_ENV_VARS = [
@@ -204,6 +204,7 @@ Commands:
   remove     Remove catalog ids or raw pi package sources
   doctor     Check local environment
   list       Print the catalog
+  outdated   Compare catalog pins with the latest published versions
 
 Options:
   --only <list>        Install only category or package ids
@@ -800,6 +801,64 @@ function cmdList(flags) {
   return 0;
 }
 
+function latestNpmVersion(name) {
+  const probe = spawnCommand("npm", ["view", name, "version"], { encoding: "utf8" });
+  if (probe.status !== 0) return null;
+  return String(probe.stdout).trim() || null;
+}
+
+function latestGitCommit(repoPath) {
+  const probe = spawnCommand("git", ["ls-remote", `https://${repoPath}`, "HEAD"], { encoding: "utf8" });
+  if (probe.status !== 0) return null;
+  return String(probe.stdout).trim().split(/\s+/)[0] || null;
+}
+
+function cmdOutdated(flags) {
+  const npmAvailable = hasCommand("npm");
+  if (!npmAvailable) console.log(yellow("npm is not on PATH; npm sources will be skipped"));
+
+  let outdatedCount = 0;
+  let errorCount = 0;
+  for (const pkg of catalog(flags)) {
+    const npmMatch = pkg.source.match(/^npm:(.+)@(\d[^@]*)$/);
+    const gitMatch = pkg.source.match(/^git:([^@]+)@([0-9a-f]{40})$/);
+    const label = pkg.id.padEnd(18);
+
+    if (npmMatch) {
+      if (!npmAvailable) continue;
+      const [, name, pinned] = npmMatch;
+      const latest = latestNpmVersion(name);
+      if (!latest) {
+        errorCount++;
+        console.log(`  ${red("xx")} ${label} could not fetch latest version of ${name}`);
+      } else if (latest === pinned) {
+        console.log(`  ${green("ok")} ${label} ${dim(pinned)}`);
+      } else {
+        outdatedCount++;
+        console.log(`  ${yellow("!!")} ${label} ${pinned} ${dim("->")} ${bold(latest)}`);
+      }
+    } else if (gitMatch) {
+      const [, repoPath, pinned] = gitMatch;
+      const latest = latestGitCommit(repoPath);
+      if (!latest) {
+        errorCount++;
+        console.log(`  ${red("xx")} ${label} could not fetch HEAD of ${repoPath}`);
+      } else if (latest === pinned) {
+        console.log(`  ${green("ok")} ${label} ${dim(pinned.slice(0, 12))}`);
+      } else {
+        outdatedCount++;
+        console.log(`  ${yellow("!!")} ${label} ${pinned.slice(0, 12)} ${dim("->")} ${bold(latest.slice(0, 12))}`);
+      }
+    } else {
+      console.log(`  ${dim("--")} ${label} ${dim(`${pkg.source} (unpinned, skipped)`)}`);
+    }
+  }
+
+  if (outdatedCount > 0) console.log(`\n${outdatedCount} package(s) behind. Update the pins in bin/mypi.mjs CATALOG, then run mypi update.`);
+  else if (errorCount === 0) console.log(`\n${green("All pinned packages are up to date.")}`);
+  return errorCount > 0 ? 1 : 0;
+}
+
 export function resolveEntrypointUrl(scriptPath) {
   if (!scriptPath) return null;
   try {
@@ -835,6 +894,8 @@ async function main() {
         return cmdDoctor(flags);
       case "list":
         return cmdList(flags);
+      case "outdated":
+        return cmdOutdated(flags);
       default:
         printHelp();
         return 2;
