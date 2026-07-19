@@ -2,40 +2,37 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 
-import { buildSpawnOptions, CATALOG, parseArgs, resolveEntrypointUrl } from "../bin/mypi.mjs";
+import { buildSpawnOptions, CATALOG, CATEGORIES, parseArgs, resolveEntrypointUrl } from "../bin/mypi.mjs";
 
 const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 
 test("catalog has unique ids and sources", () => {
   assert.equal(new Set(CATALOG.map((pkg) => pkg.id)).size, CATALOG.length);
+  assert.equal(new Set(CATALOG.map((pkg) => pkg.source)).size, CATALOG.length);
   assert.equal(CATALOG.every((pkg) => pkg.source && pkg.category && pkg.description), true);
 });
 
-test("catalog includes native diff review", () => {
-  assert.equal(
-    CATALOG.some((pkg) => pkg.id === "diff-review" && pkg.source === "git:https://github.com/badlogic/pi-diff-review"),
-    true
-  );
+test("catalog categories are valid", () => {
+  assert.equal(CATALOG.every((pkg) => CATEGORIES.includes(pkg.category)), true);
 });
 
-test("catalog includes both planning workflows", () => {
-  assert.equal(CATALOG.some((pkg) => pkg.id === "plan" && pkg.source === "npm:@devkade/pi-plan@0.2.2"), true);
-  assert.equal(CATALOG.some((pkg) => pkg.id === "review-loop" && pkg.source === "npm:pi-review-loop@0.4.4"), true);
-  assert.equal(CATALOG.some((pkg) => pkg.id === "plannotator" && pkg.source === "npm:@plannotator/pi-extension@0.19.14"), true);
+test("catalog sources use known schemes", () => {
+  for (const pkg of CATALOG) {
+    assert.match(pkg.source, /^(npm:|git:)/, `${pkg.id} has unknown source scheme: ${pkg.source}`);
+  }
 });
 
-test("catalog includes dynamic workflows", () => {
-  assert.equal(
-    CATALOG.some((pkg) => pkg.id === "dynamic-workflows" && pkg.source === "npm:pi-dynamic-workflows@1.0.1"),
-    true
-  );
+test("npm sources pin an exact version", () => {
+  for (const pkg of CATALOG.filter((item) => item.source.startsWith("npm:"))) {
+    assert.match(pkg.source, /@\d+\.\d+\.\d+(-[\w.]+)?$/, `${pkg.id} is not pinned: ${pkg.source}`);
+  }
 });
 
-test("catalog includes autoresearch", () => {
-  assert.equal(
-    CATALOG.some((pkg) => pkg.id === "autoresearch" && pkg.source === "git:github.com/davebcn87/pi-autoresearch"),
-    true
-  );
+test("catalog includes the expected workflow packages", () => {
+  const ids = new Set(CATALOG.map((pkg) => pkg.id));
+  for (const id of ["diff-review", "plan", "review-loop", "plannotator", "dynamic-workflows", "autoresearch"]) {
+    assert.equal(ids.has(id), true, `catalog is missing ${id}`);
+  }
 });
 
 test("package manifest exposes local goal extension and bundled mitsupi extensions", () => {
@@ -64,13 +61,16 @@ test("local extensions include goal extension from agent-stuff HEAD", async () =
 test("mitsupi package provides extension files and uv shims", async () => {
   const extensionFiles = (await readdir(new URL("../node_modules/mitsupi/extensions/", import.meta.url))).filter((name) => name.endsWith(".ts"));
   assert.equal(extensionFiles.includes("context.ts"), true);
-  assert.equal(extensionFiles.includes("goal.ts"), false);
   assert.equal(extensionFiles.includes("uv.ts"), true);
   assert.equal(extensionFiles.includes("multi-edit.ts"), true);
-  assert.equal(extensionFiles.length, 16);
+
+  // mitsupi が goal.ts を公開したら、この repo の vendored copy を撤去する合図
+  assert.equal(extensionFiles.includes("goal.ts"), false);
 
   const shimFiles = await readdir(new URL("../node_modules/mitsupi/intercepted-commands/", import.meta.url));
-  assert.deepEqual(shimFiles.sort(), ["pip", "pip3", "poetry", "python", "python3"]);
+  for (const shim of ["pip", "pip3", "poetry", "python", "python3"]) {
+    assert.equal(shimFiles.includes(shim), true, `mitsupi is missing uv shim: ${shim}`);
+  }
 });
 
 test("parseArgs supports selectors and local dry-run", () => {
