@@ -28,6 +28,12 @@ test("npm sources pin an exact version", () => {
   }
 });
 
+test("git sources pin a commit hash", () => {
+  for (const pkg of CATALOG.filter((item) => item.source.startsWith("git:") && item.id !== "mypi")) {
+    assert.match(pkg.source, /^git:github\.com\/[^/]+\/[^/@]+@[0-9a-f]{40}$/, `${pkg.id} is not commit-pinned: ${pkg.source}`);
+  }
+});
+
 test("catalog includes the expected workflow packages", () => {
   const ids = new Set(CATALOG.map((pkg) => pkg.id));
   for (const id of ["diff-review", "plan", "review-loop", "plannotator", "dynamic-workflows", "autoresearch"]) {

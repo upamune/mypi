@@ -45,7 +45,7 @@ export const CATALOG = [
   {
     id: "memory",
     category: "core",
-    source: "git:github.com/VandeeFeng/pi-memory-md",
+    source: "git:github.com/VandeeFeng/pi-memory-md@2c6e1948f0a594bf904c5f9dcd92a16be96710d9",
     description: "Markdown-backed persistent memory"
   },
   {
@@ -141,7 +141,7 @@ export const CATALOG = [
   {
     id: "diff-review",
     category: "ui",
-    source: "git:https://github.com/badlogic/pi-diff-review",
+    source: "git:github.com/badlogic/pi-diff-review@57622138f5b02896a230b4fbfe702d24c6a515bb",
     description: "Native diff review window with Monaco"
   },
   {
@@ -153,7 +153,7 @@ export const CATALOG = [
   {
     id: "autoresearch",
     category: "research",
-    source: "git:github.com/davebcn87/pi-autoresearch",
+    source: "git:github.com/davebcn87/pi-autoresearch@00062fb9cc425e71d82e75445dc5b6ad31c32f0e",
     description: "Autonomous research and experiment loop"
   },
   {
