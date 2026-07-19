@@ -584,17 +584,34 @@ async function cmdInstall(flags) {
       continue;
     }
     if (flags.dryRun) {
-      for (const source of staleSources) console.log(`dry-run: pi remove ${flags.local ? "-l " : ""}${source}`);
+      for (const source of staleSources) console.log(`dry-run: rewrite settings entry ${source} -> ${pkg.source}`);
       continue;
     }
-    // pi が旧 pin の entry を残した場合だけ掃除する
-    const after = readInstalledSources(flags.local);
-    for (const source of staleSources) {
-      if (!after.sources.has(source)) continue;
-      const args = flags.local ? ["remove", "-l", source] : ["remove", source];
-      console.log(`> pi ${args.join(" ")}`);
-      spawnCommand("pi", args, { stdio: "inherit" });
-    }
+    // pi install は同名 package の既存 entry を旧 source のまま残し、
+    // pi remove は package 名単位で新 pin まで巻き添え削除するため、
+    // 旧 pin の entry は settings の packages 配列を直接新 source に書き換える
+    const cleanup = writeSettings(flags.local, (settings) => {
+      const packages = settings.packages ?? [];
+      let hasNew = packages.some((entry) => (typeof entry === "string" ? entry : entry?.source) === pkg.source);
+      let changed = false;
+      const next = [];
+      for (const entry of packages) {
+        const source = typeof entry === "string" ? entry : entry?.source;
+        if (!staleSources.includes(source)) {
+          next.push(entry);
+          continue;
+        }
+        changed = true;
+        if (hasNew) continue;
+        next.push(typeof entry === "string" ? pkg.source : { ...entry, source: pkg.source });
+        hasNew = true;
+      }
+      if (!changed) return false;
+      settings.packages = next;
+      return true;
+    });
+    if (!cleanup.ok) console.error(red(`Could not update stale entries in ${cleanup.path}: ${cleanup.error}`));
+    else if (cleanup.changed) console.log(`Updated settings entry: ${staleSources.join(", ")} -> ${pkg.source}`);
   }
 
   if (failed.length > 0) {
