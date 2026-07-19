@@ -19,6 +19,12 @@ export const CATALOG = [
     description: "Personal Pi prompts and skills from this repo"
   },
   {
+    id: "mitsupi",
+    category: "core",
+    source: "git:github.com/mitsuhiko/agent-stuff@4bce45560fa55ace2f5dc8634a63a2af464ddc8b",
+    description: "Armin's pi commands, skills, extensions, and themes (agent-stuff)"
+  },
+  {
     id: "subagents",
     category: "core",
     source: "npm:pi-subagents@0.35.1",

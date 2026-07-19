@@ -20,14 +20,8 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
       - name: Update catalog pins
         run: node scripts/update-pins.mjs
-      - name: Update mitsupi within semver range
-        run: bun update mitsupi
-      - name: Sync goal.ts from upstream
-        run: bun run sync:goal
       - name: Run tests
         run: bun run test
       - name: Smoke test CLI
@@ -42,14 +36,12 @@ jobs:
           commit-message: |
             pi package の pin を自動更新
 
-            update-pins workflow による自動更新。catalog の npm / git pin、
-            mitsupi(semver 範囲内)、vendored goal.ts を最新化する。
+            update-pins workflow による自動更新。catalog の npm / git pin を
+            最新化する。
           body: |
             週次の update-pins workflow による自動更新です。
 
             - `scripts/update-pins.mjs` で catalog の npm pin / git commit pin を最新化
-            - `bun update mitsupi` で lockfile を semver 範囲内で更新
-            - `bun run sync:goal` で vendored goal.ts を upstream HEAD に同期
             - `bun run test` と CLI の dry-run smoke は本 PR 作成前に pass 済み
 
             merge 後、手元には `bun run setup`(または `mypi update`)で反映してください。

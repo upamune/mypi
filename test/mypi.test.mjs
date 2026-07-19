@@ -45,47 +45,22 @@ test("README catalog table covers every catalog id", async () => {
 
 test("catalog includes the expected workflow packages", () => {
   const ids = new Set(CATALOG.map((pkg) => pkg.id));
-  for (const id of ["diff-review", "plan", "review-loop", "plannotator", "dynamic-workflows", "autoresearch"]) {
+  for (const id of ["mitsupi", "diff-review", "plan", "review-loop", "plannotator", "dynamic-workflows", "autoresearch"]) {
     assert.equal(ids.has(id), true, `catalog is missing ${id}`);
   }
 });
 
-test("package manifest exposes local goal extension and bundled mitsupi extensions", () => {
-  assert.deepEqual(packageJson.pi.extensions, ["extensions", "node_modules/mitsupi/extensions"]);
-  assert.equal(packageJson.files.includes("extensions"), true);
-  assert.equal(packageJson.files.includes("intercepted-commands"), false);
-  assert.equal(packageJson.dependencies.diff, "^8.0.2");
-  assert.equal(packageJson.dependencies.mitsupi, "^1.6.0");
-  assert.equal(packageJson.bundledDependencies, undefined);
-  assert.equal(packageJson.peerDependencies["@earendil-works/pi-coding-agent"], "*");
-  assert.equal(packageJson.peerDependencies["@earendil-works/pi-ai"], "*");
-  assert.equal(packageJson.peerDependencies["@earendil-works/pi-tui"], "*");
-  assert.equal(packageJson.peerDependencies.typebox, "*");
+test("package manifest exposes only prompts and skills", () => {
+  assert.deepEqual(packageJson.pi, { skills: ["skills"], prompts: ["prompts"] });
+  assert.equal(packageJson.files.includes("extensions"), false);
+  // mitsupi (agent-stuff) は npm 依存ではなく catalog の git pin で入れる
+  assert.equal(packageJson.dependencies, undefined);
+  assert.equal(packageJson.peerDependencies, undefined);
 });
 
-test("local extensions include goal extension from agent-stuff HEAD", async () => {
-  const extensionFiles = (await readdir(new URL("../extensions/", import.meta.url))).filter((name) => name.endsWith(".ts"));
-  assert.deepEqual(extensionFiles.sort(), ["goal.ts"]);
-
-  const goalSource = await readFile(new URL("../extensions/goal.ts", import.meta.url), "utf8");
-  assert.match(goalSource, /registerCommand\("goal"/);
-  assert.match(goalSource, /registerTool\(\{\s*name: "create_goal"/s);
-  assert.match(goalSource, /registerTool\(\{\s*name: "update_goal"/s);
-});
-
-test("mitsupi package provides extension files and uv shims", async () => {
-  const extensionFiles = (await readdir(new URL("../node_modules/mitsupi/extensions/", import.meta.url))).filter((name) => name.endsWith(".ts"));
-  assert.equal(extensionFiles.includes("context.ts"), true);
-  assert.equal(extensionFiles.includes("uv.ts"), true);
-  assert.equal(extensionFiles.includes("multi-edit.ts"), true);
-
-  // mitsupi が goal.ts を公開したら、この repo の vendored copy を撤去する合図
-  assert.equal(extensionFiles.includes("goal.ts"), false);
-
-  const shimFiles = await readdir(new URL("../node_modules/mitsupi/intercepted-commands/", import.meta.url));
-  for (const shim of ["pip", "pip3", "poetry", "python", "python3"]) {
-    assert.equal(shimFiles.includes(shim), true, `mitsupi is missing uv shim: ${shim}`);
-  }
+test("mitsupi comes from the pinned agent-stuff git source", () => {
+  const pkg = CATALOG.find((item) => item.id === "mitsupi");
+  assert.match(pkg.source, /^git:github\.com\/mitsuhiko\/agent-stuff@[0-9a-f]{40}$/);
 });
 
 test("parseArgs supports selectors and local dry-run", () => {

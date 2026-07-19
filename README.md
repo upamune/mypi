@@ -5,8 +5,9 @@
 この repo は 2 つの役割を持ちます。
 
 - `mypi` CLI: Pi 本体と、よく使う Pi packages をまとめてインストールする
-- Pi package: この repo 内の `skills/`, `prompts/`, `extensions/` と `mitsupi` の extensions を Pi に読み込ませる
-- bundled extensions: [`mitsupi`](https://github.com/mitsuhiko/agent-stuff) package 経由で `agent-stuff` の published extensions を読み込ませつつ、npm package に未収録の `goal.ts` はこの repo から追加で読み込ませる
+- Pi package: この repo 内の `skills/` と `prompts/` を Pi に読み込ませる
+
+[`agent-stuff`](https://github.com/mitsuhiko/agent-stuff)(mitsupi)は catalog の git source として commit pin 付きで導入します。
 
 ## Install
 
@@ -85,7 +86,8 @@ default では次を入れます。
 
 | Category | ID | Source | Description |
 | --- | --- | --- | --- |
-| `personal` | `mypi` | [github.com/upamune/mypi](https://github.com/upamune/mypi) | Personal Pi prompts, skills, local `goal.ts`, and bundled mitsupi extensions |
+| `personal` | `mypi` | [github.com/upamune/mypi](https://github.com/upamune/mypi) | Personal Pi prompts and skills |
+| `core` | `mitsupi` | [github.com/mitsuhiko/agent-stuff](https://github.com/mitsuhiko/agent-stuff) | Armin's pi commands, skills, extensions, and themes |
 | `core` | `subagents` | [npm:pi-subagents](https://www.npmjs.com/package/pi-subagents) | Sub-agent execution |
 | `core` | `ask-user` | [npm:pi-ask-user](https://www.npmjs.com/package/pi-ask-user) | Interactive ask-user prompts for agent workflows |
 | `core` | `mcp` | [npm:pi-mcp-adapter](https://www.npmjs.com/package/pi-mcp-adapter) | MCP server integration |
@@ -120,16 +122,11 @@ For manual control, use `/review-plan` to run the agent loop over a plan, then `
 
 日々の開発でどの prompt / skill / package をいつ使うかは [`docs/development_flow.md`](docs/development_flow.md) にまとめています。
 
-## Bundled Extensions
+## mitsupi (agent-stuff)
 
-`mitsuhiko/agent-stuff` は npm package `mitsupi` として依存に入れ、Pi manifest から `node_modules/mitsupi/extensions` を参照します。published `mitsupi` package には GitHub HEAD にある `goal.ts` が含まれていないため、`goal.ts` だけこの repo の `extensions/goal.ts` に vendoring して Pi manifest から先に読み込ませます。`uv.ts` が参照する PATH shim は `mitsupi` package 側の `intercepted-commands/` を使います。
+`mitsuhiko/agent-stuff` は repo root がそのまま `mitsupi` という Pi package なので、catalog の git source(commit pin 付き)として導入します。extensions に加えて skills / themes / prompt commands も読み込まれ、`goal.ts` を含む upstream HEAD の内容がそのまま入ります。pin の更新は週次の update-pins workflow が PR で提案します。
 
-`extensions/goal.ts` は `bun run sync:goal` で upstream の HEAD(または指定 commit)に再同期できます。同期元 commit はファイル先頭の header comment に記録されます。mitsupi 側に `goal.ts` が収録されたらテストが失敗して知らせるので、そのタイミングで vendored copy を撤去します。
-
-| Source | Path | Contents |
-| --- | --- | --- |
-| local | `extensions/goal.ts` | upstream `agent-stuff` の `goal.ts`。`/goal`, `get_goal`, `create_goal`, `update_goal` を追加 |
-| `mitsupi` | `node_modules/mitsupi/extensions` | published package に含まれる `context.ts`, `uv.ts`, `multi-edit.ts` など |
+npm の `mitsupi` package は 2026-04 の 1.6.0 を最後に publish が止まっているため使いません(以前は npm 版 + 未収録の `goal.ts` だけ vendoring する構成でしたが、git pin に一本化しました)。
 
 ## After Install
 

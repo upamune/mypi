@@ -5,17 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## コマンド
 
 ```bash
-bun install                                # 依存導入(mitsupi と pi の型が入る)
 bun run test                               # テスト実行(node --test)
 node --test --test-name-pattern "catalog"  # 単一テストの絞り込み実行
 node bin/mypi.mjs install --dry-run --yes  # インストーラの smoke(実書き込みなし)
 node bin/mypi.mjs status | doctor | list | outdated
 bun run install:local-source               # ローカル checkout を self source として install
-bun run sync:goal                          # extensions/goal.ts を upstream に再同期
 ```
 
 - **`bun test` は使わない**。Bun 自前 runner で挙動が変わるため、CI と同じ `bun run test`(= `node --test`)を使う。
-- テストの一部は `node_modules/mitsupi` の実体を読むので、`bun install` 前はテストが失敗する。
 - `.github/workflows/ci.yml` を編集したら `pinact run .github/workflows/ci.yml` で action の SHA pin を維持する(pinact は mise 管理、非対話シェルでは `mise x -- pinact`)。
 
 ## アーキテクチャ
@@ -23,7 +20,7 @@ bun run sync:goal                          # extensions/goal.ts を upstream に
 この repo は 2 つの役割を持つ:
 
 1. **`mypi` CLI**(`bin/mypi.mjs`、単一ファイル): Pi 本体と厳選 package を `pi install` でまとめて導入するインストーラ。`~/.pi/agent/settings.json`(または `--local` で `./.pi/settings.json`)を直接編集する。
-2. **Pi package 本体**: `package.json` の `pi` manifest が `skills/` `prompts/` `extensions/` と `node_modules/mitsupi/extensions` を Pi に読み込ませる。
+2. **Pi package 本体**: `package.json` の `pi` manifest が `skills/` と `prompts/` を Pi に読み込ませる。
 
 ### CATALOG が唯一の source of truth
 
@@ -42,9 +39,9 @@ bun run sync:goal                          # extensions/goal.ts を upstream に
 - そのため pin 更新時は settings の `packages` 配列を直接「旧 source → 新 source」に書き換えている(`cmdInstall` の `toUpgrade` 処理)。
 - source の同一性比較は `normalizeSource`(version / commit pin と URL 表記差を吸収して package 名で比較)を通す。
 
-### goal.ts の vendoring
+### mitsupi は git pin で導入
 
-`extensions/goal.ts` は `mitsuhiko/agent-stuff` からの vendored copy(published `mitsupi` npm package に未収録のため)。同期元 commit はファイル先頭の header に記録され、`bun run sync:goal` で再同期する。mitsupi 側に goal.ts が収録されるとテストが失敗する設計になっており、それが vendored copy を撤去する合図。
+`mitsuhiko/agent-stuff` は repo root がそのまま `mitsupi` Pi package なので、catalog の git source(commit pin)として入れる。npm の `mitsupi` package は 2026-04 で publish が止まっているため使わない(npm 依存 + goal.ts vendoring の旧構成から一本化した経緯がある)。pin は週次 workflow が自動更新する。
 
 ### Pi package の解決は Bun
 
