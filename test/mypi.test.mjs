@@ -49,7 +49,7 @@ test("package manifest exposes local goal extension and bundled mitsupi extensio
   assert.equal(packageJson.files.includes("intercepted-commands"), false);
   assert.equal(packageJson.dependencies.diff, "^8.0.2");
   assert.equal(packageJson.dependencies.mitsupi, "^1.6.0");
-  assert.equal(packageJson.bundledDependencies.includes("mitsupi"), true);
+  assert.equal(packageJson.bundledDependencies, undefined);
   assert.equal(packageJson.peerDependencies["@earendil-works/pi-coding-agent"], "*");
   assert.equal(packageJson.peerDependencies["@earendil-works/pi-ai"], "*");
   assert.equal(packageJson.peerDependencies["@earendil-works/pi-tui"], "*");
