@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { argv, cwd, env, exit, stdin, stderr, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
@@ -338,9 +338,22 @@ function readInstalledSources(local) {
   return { path, exists: current.exists, sources, error: null };
 }
 
+const BACKUP_KEEP = 5;
+
 function backupPath(path) {
   const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
   return `${path}.mypi.${stamp}.bak`;
+}
+
+export function pruneBackups(path, keep = BACKUP_KEEP) {
+  const dir = dirname(path);
+  const prefix = `${basename(path)}.mypi.`;
+  const backups = readdirSync(dir)
+    .filter((name) => name.startsWith(prefix) && name.endsWith(".bak"))
+    .sort();
+  for (const name of backups.slice(0, Math.max(0, backups.length - keep))) {
+    unlinkSync(join(dir, name));
+  }
 }
 
 function writeSettings(local, mutate) {
@@ -354,6 +367,7 @@ function writeSettings(local, mutate) {
   if (existsSync(path)) {
     const backup = backupPath(path);
     copyFileSync(path, backup);
+    pruneBackups(path);
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
     return { ok: true, changed: true, path, backup };
@@ -371,14 +385,15 @@ function writeSubagentModelFallbacks(flags) {
   }
 
   return writeSettings(flags.local, (settings) => {
-    const overrides = {};
-    for (const name of SUBAGENT_BUILTIN_MODELS) overrides[name] = { model: "" };
+    const existing = settings.subagents?.agentOverrides ?? {};
+    const missing = SUBAGENT_BUILTIN_MODELS.filter((name) => existing[name]?.model === undefined);
+    if (missing.length === 0) return false;
+
+    const overrides = { ...existing };
+    for (const name of missing) overrides[name] = { ...(overrides[name] ?? {}), model: "" };
     settings.subagents = {
       ...(settings.subagents ?? {}),
-      agentOverrides: {
-        ...(settings.subagents?.agentOverrides ?? {}),
-        ...overrides
-      }
+      agentOverrides: overrides
     };
     return true;
   });

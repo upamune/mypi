@@ -1,8 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readdir, readFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
-import { buildSpawnOptions, CATALOG, CATEGORIES, parseArgs, resolveEntrypointUrl } from "../bin/mypi.mjs";
+import { buildSpawnOptions, CATALOG, CATEGORIES, parseArgs, pruneBackups, resolveEntrypointUrl } from "../bin/mypi.mjs";
 
 const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 
@@ -99,6 +101,25 @@ test("buildSpawnOptions enables shell on Windows only", () => {
   assert.deepEqual(buildSpawnOptions({ stdio: "inherit" }, "linux"), {
     stdio: "inherit"
   });
+});
+
+test("pruneBackups keeps only the newest backups", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "mypi-test-"));
+  const settings = join(dir, "settings.json");
+  const stamps = ["20260101T000000Z", "20260102T000000Z", "20260103T000000Z", "20260104T000000Z"];
+  for (const stamp of stamps) {
+    await writeFile(`${settings}.mypi.${stamp}.bak`, "{}");
+  }
+  await writeFile(join(dir, "unrelated.bak"), "{}");
+
+  pruneBackups(settings, 2);
+
+  const remaining = (await readdir(dir)).sort();
+  assert.deepEqual(remaining, [
+    "settings.json.mypi.20260103T000000Z.bak",
+    "settings.json.mypi.20260104T000000Z.bak",
+    "unrelated.bak"
+  ]);
 });
 
 test("resolveEntrypointUrl tolerates missing paths", () => {
