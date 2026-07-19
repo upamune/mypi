@@ -117,7 +117,7 @@ export const CATALOG = [
   {
     id: "todos",
     category: "ui",
-    source: "git:github.com/tintinweb/pi-manage-todo-list@b75c449aa85ce328e9a8b632f62bf642aed40359",
+    source: "git:github.com/tintinweb/pi-manage-todo-list@2eb22d3b0c9dd981398d928c8edcc4afce202fa1",
     description: "Todo list management"
   },
   {
