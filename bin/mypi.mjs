@@ -21,7 +21,7 @@ export const CATALOG = [
   {
     id: "mitsupi",
     category: "core",
-    source: "git:github.com/mitsuhiko/agent-stuff@4bce45560fa55ace2f5dc8634a63a2af464ddc8b",
+    source: "git:github.com/mitsuhiko/agent-stuff@cc4b711dc6a2bee2aefb89820600e38291500543",
     description: "Armin's pi commands, skills, extensions, and themes (agent-stuff)"
   },
   {
