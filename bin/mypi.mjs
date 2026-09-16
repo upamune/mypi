@@ -21,31 +21,31 @@ export const CATALOG = [
   {
     id: "mitsupi",
     category: "core",
-    source: "git:github.com/mitsuhiko/agent-stuff@4bce45560fa55ace2f5dc8634a63a2af464ddc8b",
+    source: "git:github.com/mitsuhiko/agent-stuff@122e2994adddb113c04764c5697217dae120fcc6",
     description: "Armin's pi commands, skills, extensions, and themes (agent-stuff)"
   },
   {
     id: "subagents",
     category: "core",
-    source: "npm:pi-subagents@0.35.1",
+    source: "npm:pi-subagents@0.67.0",
     description: "Sub-agent execution"
   },
   {
     id: "ask-user",
     category: "core",
-    source: "npm:pi-ask-user@0.13.0",
+    source: "npm:pi-ask-user@0.15.0",
     description: "Interactive ask-user prompts for agent workflows"
   },
   {
     id: "mcp",
     category: "core",
-    source: "npm:pi-mcp-adapter@2.11.0",
+    source: "npm:pi-mcp-adapter@2.33.0",
     description: "MCP server integration"
   },
   {
     id: "web-access",
     category: "core",
-    source: "npm:pi-web-access@0.13.0",
+    source: "npm:pi-web-access@0.29.0",
     description: "Web search and URL fetching"
   },
   {
@@ -81,7 +81,7 @@ export const CATALOG = [
   {
     id: "prompt-templates",
     category: "core",
-    source: "npm:pi-prompt-template-model@0.10.0",
+    source: "npm:pi-prompt-template-model@0.12.2",
     description: "Prompt template model and thinking frontmatter"
   },
   {
@@ -99,19 +99,19 @@ export const CATALOG = [
   {
     id: "powerbar-settings",
     category: "ui",
-    source: "npm:@juanibiapina/pi-extension-settings@0.8.0",
+    source: "npm:@juanibiapina/pi-extension-settings@0.10.0",
     description: "Shared settings layer for UI extensions"
   },
   {
     id: "powerbar",
     category: "ui",
-    source: "npm:@juanibiapina/pi-powerbar@0.12.0",
+    source: "npm:@juanibiapina/pi-powerbar@0.15.1",
     description: "Live status bar"
   },
   {
     id: "usage",
     category: "ui",
-    source: "npm:@tmustier/pi-usage-extension@0.9.1",
+    source: "npm:@tmustier/pi-usage-extension@0.9.4",
     description: "Token and cost tracker"
   },
   {
@@ -135,19 +135,19 @@ export const CATALOG = [
   {
     id: "interactive-shell",
     category: "ui",
-    source: "npm:pi-interactive-shell@0.13.0",
+    source: "npm:pi-interactive-shell@0.15.2",
     description: "Observable interactive shell overlays"
   },
   {
     id: "plannotator",
     category: "ui",
-    source: "npm:@plannotator/pi-extension@0.23.1",
+    source: "npm:@plannotator/pi-extension@0.27.14",
     description: "Visual plan review, annotation, and approval workflow"
   },
   {
     id: "herdr",
     category: "ui",
-    source: "npm:@ogulcancelik/pi-herdr@0.3.0",
+    source: "npm:@ogulcancelik/pi-herdr@0.4.0",
     description: "Herdr-native orchestration tool and skill (inactive outside Herdr panes)"
   },
   {
@@ -165,7 +165,7 @@ export const CATALOG = [
   {
     id: "autoresearch",
     category: "research",
-    source: "git:github.com/davebcn87/pi-autoresearch@00062fb9cc425e71d82e75445dc5b6ad31c32f0e",
+    source: "git:github.com/davebcn87/pi-autoresearch@939ede8220daad440eac6bb7b6e315cc283e0a64",
     description: "Autonomous research and experiment loop"
   },
   {
